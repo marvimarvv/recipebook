@@ -49,6 +49,8 @@ const nextConfig = withPWA({
   swcMinify: true,
   // iOS specific: Enable output for better PWA support
   output: 'standalone',
+  // Fix cross-origin request warning for development
+  allowedDevOrigins: ['nf4qfd-3000.csb.app', 'localhost:3000'],
   images: {
     domains: ['images.unsplash.com', 'api.dicebear.com'],
     // iOS specific: Enable image optimization for PWA

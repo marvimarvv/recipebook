@@ -37,7 +37,7 @@ export interface MistralResponse {
 }
 
 // Default model
-export const DEFAULT_MODEL = 'mistral-tiny';
+const DEFAULT_MODEL = 'mistral-tiny';
 
 // Generate a meal plan using Mistral AI
 export async function generateMealPlanWithMistral(
