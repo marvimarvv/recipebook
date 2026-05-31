@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Sparkles, ChefHat, Clock, Users, Flame, Loader2, Check, X, Sun, Moon, Coffee, Cake } from 'lucide-react'
+import { Sparkles, ChefHat, Clock, Users, Flame, Loader2, Check, X, Sun, Moon, Coffee, Cake, Robot, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useStore } from '@/store/useStore'
 import { GeneratedRecipe, MealPlan, COOKING_TIME_OPTIONS, DIFFICULTY_OPTIONS } from '@/types'
+import { generateMealPlanWithMistral, parseMealPlanResponse, checkMistralAPI } from '@/lib/mistral'
 
 export default function AIRecipeGenerator() {
   const preferences = useStore(state => state.preferences)
@@ -23,8 +24,74 @@ export default function AIRecipeGenerator() {
     includeAllPreferences: true,
     randomize: false
   })
+  const [useMistralAPI, setUseMistralAPI] = useState(true)
+  const [apiAvailable, setApiAvailable] = useState<boolean | null>(null)
 
-  // Mock AI generation function
+  // Check Mistral API availability on component mount
+  useEffect(() => {
+    const checkAPI = async () => {
+      try {
+        const available = await checkMistralAPI()
+        setApiAvailable(available)
+      } catch (error) {
+        setApiAvailable(false)
+      }
+    }
+    checkAPI()
+  }, [])
+
+  // Generate recipes using Mistral AI
+  const generateRecipesWithAI = async (): Promise<GeneratedRecipe[]> => {
+    try {
+      const response = await generateMealPlanWithMistral(preferences, nutritionSettings, generationOptions)
+      const mealPlanData = parseMealPlanResponse(response)
+      
+      if (!mealPlanData) {
+        throw new Error('Invalid response format from AI')
+      }
+      
+      // Convert the AI response to our GeneratedRecipe format
+      const recipes: GeneratedRecipe[] = []
+      
+      Object.entries(mealPlanData.meals || {}).forEach(([mealType, mealRecipes]) => {
+        if (Array.isArray(mealRecipes)) {
+          mealRecipes.forEach((recipe: any) => {
+            recipes.push({
+              id: `${mealType}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              name: recipe.name || 'Untitled Recipe',
+              description: recipe.description || '',
+              ingredients: recipe.ingredients || [],
+              instructions: recipe.instructions || [],
+              prepTime: recipe.prepTime || 0,
+              cookTime: recipe.cookTime || 0,
+              servings: recipe.servings || 1,
+              nutrition: recipe.nutrition || {
+                calories: 0,
+                protein: 0,
+                carbs: 0,
+                fat: 0
+              },
+              mealType: mealType as 'breakfast' | 'lunch' | 'dinner' | 'snack',
+              tags: recipe.tags || []
+            })
+          })
+        }
+      })
+      
+      return recipes
+    } catch (error) {
+      console.error('AI generation error:', error)
+      addToast({
+        title: 'AI Error',
+        description: 'Failed to generate with Mistral AI. Falling back to mock data.',
+        type: 'error'
+      })
+      // Fall back to mock data
+      return generateMockRecipes()
+    }
+  }
+
+  // Fallback mock AI generation function
   const generateMockRecipes = async (): Promise<GeneratedRecipe[]> => {
     const mockRecipes: GeneratedRecipe[] = [
       {
@@ -129,8 +196,10 @@ export default function AIRecipeGenerator() {
     setGeneratedMealPlan(null)
     
     try {
-      // Simulate AI generation
-      const recipes = await generateMockRecipes()
+      // Use Mistral AI if available and enabled
+      const recipes = useMistralAPI && apiAvailable 
+        ? await generateRecipesWithAI()
+        : await generateMockRecipes()
       
       // Create meal plan based on settings
       const mealPlan: MealPlan = {
@@ -244,6 +313,63 @@ export default function AIRecipeGenerator() {
           <p className="text-muted-foreground">Generate personalized meal plans based on your preferences</p>
         </div>
       </div>
+
+      {/* API Status */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Mistral AI Integration</CardTitle>
+          <CardDescription>
+            Your Mistral API key is configured and ready to use
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {apiAvailable === true && (
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-sm font-medium">Mistral AI: Connected</span>
+                </div>
+              )}
+              {apiAvailable === false && (
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500" />
+                  <span className="text-sm font-medium">Mistral AI: Connection failed</span>
+                </div>
+              )}
+              {apiAvailable === null && (
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-yellow-500 animate-pulse" />
+                  <span className="text-sm font-medium">Checking Mistral AI connection...</span>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Use AI:</span>
+              <Button
+                variant={useMistralAPI ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setUseMistralAPI(!useMistralAPI)}
+                disabled={apiAvailable === false}
+              >
+                {useMistralAPI ? 'Yes' : 'No'}
+              </Button>
+            </div>
+          </div>
+          {apiAvailable === false && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-md text-sm"
+            >
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-red-500" />
+                <span>Mistral API connection failed. Using mock data for demonstration.</span>
+              </div>
+            </motion.div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Generation Options */}
       <Card>
@@ -407,11 +533,19 @@ export default function AIRecipeGenerator() {
               animate={{ rotate: [0, 360] }}
               transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
             >
-              <ChefHat className="h-10 w-10 text-primary-foreground" />
+              {useMistralAPI && apiAvailable ? (
+                <Robot className="h-10 w-10 text-primary-foreground" />
+              ) : (
+                <ChefHat className="h-10 w-10 text-primary-foreground" />
+              )}
             </motion.div>
-            <h3 className="text-xl font-semibold mb-2">Cooking Up Something Delicious...</h3>
+            <h3 className="text-xl font-semibold mb-2">
+              {useMistralAPI && apiAvailable ? 'Mistral AI is Generating...' : 'Cooking Up Something Delicious...'}
+            </h3>
             <p className="text-muted-foreground">
-              AI is analyzing your preferences and creating a personalized meal plan just for you!
+              {useMistralAPI && apiAvailable 
+                ? 'Using Mistral AI to create a personalized meal plan based on your preferences!' 
+                : 'AI is analyzing your preferences and creating a personalized meal plan just for you!'}
             </p>
             <div className="flex justify-center gap-2 mt-6">
               <motion.div 
