@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Settings, Flame, Dumbbell, BreadSlice, Droplets, TrendingUp, ResetIcon } from 'lucide-react'
+import { Settings, Flame, Dumbbell, BreadSlice, Droplets, TrendingUp, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Slider } from '@/components/ui/slider'
@@ -131,7 +131,7 @@ export default function NutritionSettings() {
           <p className="text-muted-foreground">Set your daily calorie and macronutrient goals</p>
         </div>
         <Button variant="outline" size="sm" onClick={handleReset}>
-          <ResetIcon className="h-4 w-4 mr-2" />
+          <RotateCcw className="h-4 w-4 mr-2" />
           Reset
         </Button>
       </div>
