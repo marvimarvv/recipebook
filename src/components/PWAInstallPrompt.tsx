@@ -10,8 +10,10 @@ export default function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null)
   const [isIOS, setIsIOS] = useState(false)
   const [isStandalone, setIsStandalone] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     // Check if we're on iOS
     const userAgent = window.navigator.userAgent.toLowerCase()
     const isIOSDevice = /iphone|ipad|ipod/.test(userAgent) || 
@@ -92,7 +94,11 @@ export default function PWAInstallPrompt() {
     setShowPrompt(false)
   }
 
-  // Don't show prompt if already installed or on standalone mode
+  // Don't render on the server, or if already installed or on standalone mode
+  if (!mounted) {
+    return null
+  }
+
   if (isStandalone || localStorage.getItem('recipebook-pwa-installed') === 'true') {
     return null
   }

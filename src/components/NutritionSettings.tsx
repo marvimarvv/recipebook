@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Settings, Flame, Dumbbell, BreadSlice, Droplets, TrendingUp, RotateCcw } from 'lucide-react'
+import { Settings, Flame, Dumbbell, Wheat, Droplets, TrendingUp, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Slider } from '@/components/ui/slider'
@@ -103,7 +103,7 @@ export default function NutritionSettings() {
       key: 'carbGoal',
       title: 'Carbohydrates',
       description: 'Primary energy source',
-      icon: <BreadSlice className="h-6 w-6" />,
+      icon: <Wheat className="h-6 w-6" />,
       value: carbsInput,
       color: 'from-amber-500 to-orange-500',
       onChange: (value: number[]) => handleMacroChange('carbGoal', value)
