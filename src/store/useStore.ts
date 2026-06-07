@@ -1,3 +1,5 @@
+"use client"
+
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { UserPreferences, NutritionSettings, Recipe, MealPlan, ToastMessage } from '@/types'

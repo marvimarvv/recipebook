@@ -11,6 +11,7 @@ import KnownRecipes from '@/components/KnownRecipes'
 import NutritionSettings from '@/components/NutritionSettings'
 import AIRecipeGenerator from '@/components/AIRecipeGenerator'
 import Toast from '@/components/Toast'
+import PWAInstallPrompt from '@/components/PWAInstallPrompt'
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('preferences')
@@ -179,6 +180,7 @@ export default function Home() {
       
       {/* Toast Notifications */}
       <Toast />
+      <PWAInstallPrompt />
     </div>
   )
 }

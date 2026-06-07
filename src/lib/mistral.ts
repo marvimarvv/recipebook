@@ -1,3 +1,5 @@
+"use client"
+
 // Mistral API Configuration
 const MISTRAL_API_KEY = 'hYXRYG46tSAXPlsUyaJkaANVDNJwRlRI';
 const MISTRAL_API_URL = 'https://api.mistral.ai/v1/chat/completions';
