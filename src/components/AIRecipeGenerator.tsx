@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Sparkles, ChefHat, Clock, Users, Flame, Loader2, Check, X, Sun, Moon, Coffee, Cake, Robot, AlertCircle } from 'lucide-react'
+import { Sparkles, ChefHat, Clock, Users, Flame, Loader2, Check, X, Sun, Moon, Coffee, Cake, Bot, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -534,7 +534,7 @@ export default function AIRecipeGenerator() {
               transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
             >
               {useMistralAPI && apiAvailable ? (
-                <Robot className="h-10 w-10 text-primary-foreground" />
+                <Bot className="h-10 w-10 text-primary-foreground" />
               ) : (
                 <ChefHat className="h-10 w-10 text-primary-foreground" />
               )}
