@@ -22,7 +22,7 @@ export default function PWAInstallPrompt() {
 
     // Check if app is already installed as PWA
     const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches ||
-                           window.navigator.standalone
+                           !!((window.navigator as Navigator & { standalone?: boolean }).standalone)
     setIsStandalone(isStandaloneMode)
 
     // Check if PWA installation is available

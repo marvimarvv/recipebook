@@ -15,7 +15,7 @@ export function isStandalone(): boolean {
   if (displayMode) return true
   
   // Check for iOS standalone
-  if (window.navigator.standalone) return true
+  if ((window.navigator as Navigator & { standalone?: boolean }).standalone) return true
   
   // Check for Capacitor/Cordova
   if ((window as any).Capacitor) return true

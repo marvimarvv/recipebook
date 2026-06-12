@@ -61,69 +61,66 @@ const defaultNutritionSettings: NutritionSettings = {
 
 export const useStore = create<AppState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       // User Preferences
       preferences: defaultPreferences,
-      setPreferences: (preferences) => 
-        set({ preferences: typeof preferences === 'function' ? preferences(useStore.getState().preferences) : preferences }),
-      
+      setPreferences: (preferences: UserPreferences | ((prev: UserPreferences) => UserPreferences)) =>
+        set({ preferences: typeof preferences === 'function' ? preferences(get().preferences) : preferences }),
+
       // Nutrition Settings
       nutritionSettings: defaultNutritionSettings,
-      setNutritionSettings: (settings) => 
-        set({ nutritionSettings: typeof settings === 'function' ? settings(useStore.getState().nutritionSettings) : settings }),
-      
+      setNutritionSettings: (settings: NutritionSettings | ((prev: NutritionSettings) => NutritionSettings)) =>
+        set({ nutritionSettings: typeof settings === 'function' ? settings(get().nutritionSettings) : settings }),
+
       // Recipes
-      recipes: [],
-      addRecipe: (recipe) => 
+      recipes: [] as Recipe[],
+      addRecipe: (recipe: Recipe) =>
         set((state) => ({ recipes: [...state.recipes, recipe] })),
-      updateRecipe: (id, updates) => 
+      updateRecipe: (id: string, updates: Partial<Recipe>) =>
         set((state) => ({
-          recipes: state.recipes.map(recipe => 
+          recipes: state.recipes.map((recipe) =>
             recipe.id === id ? { ...recipe, ...updates } : recipe
-          )
+          ),
         })),
-      deleteRecipe: (id) => 
-        set((state) => ({ recipes: state.recipes.filter(recipe => recipe.id !== id) })),
-      toggleFavorite: (id) => 
+      deleteRecipe: (id: string) =>
+        set((state) => ({ recipes: state.recipes.filter((recipe) => recipe.id !== id) })),
+      toggleFavorite: (id: string) =>
         set((state) => ({
-          recipes: state.recipes.map(recipe => 
+          recipes: state.recipes.map((recipe) =>
             recipe.id === id ? { ...recipe, isFavorite: !recipe.isFavorite } : recipe
-          )
+          ),
         })),
-      
+
       // Meal Plans
-      mealPlans: [],
-      addMealPlan: (mealPlan) => 
+      mealPlans: [] as MealPlan[],
+      addMealPlan: (mealPlan: MealPlan) =>
         set((state) => ({ mealPlans: [...state.mealPlans, mealPlan] })),
-      updateMealPlan: (id, updates) => 
+      updateMealPlan: (id: string, updates: Partial<MealPlan>) =>
         set((state) => ({
-          mealPlans: state.mealPlans.map(mealPlan => 
+          mealPlans: state.mealPlans.map((mealPlan) =>
             mealPlan.id === id ? { ...mealPlan, ...updates } : mealPlan
-          )
+          ),
         })),
-      deleteMealPlan: (id) => 
-        set((state) => ({ mealPlans: state.mealPlans.filter(mealPlan => mealPlan.id !== id) })),
-      
+      deleteMealPlan: (id: string) =>
+        set((state) => ({ mealPlans: state.mealPlans.filter((mealPlan) => mealPlan.id !== id) })),
+
       // Toast Messages
-      toasts: [],
-      addToast: (toast) => 
+      toasts: [] as ToastMessage[],
+      addToast: (toast: Omit<ToastMessage, 'id'>) =>
         set((state) => ({
-          toasts: [...state.toasts, { 
-            ...toast, 
-            id: Date.now().toString() 
-          }]
+          toasts: [...state.toasts, { ...toast, id: Date.now().toString() }],
         })),
-      removeToast: (id) => 
-        set((state) => ({ toasts: state.toasts.filter(toast => toast.id !== id) })),
-      
+      removeToast: (id: string) =>
+        set((state) => ({ toasts: state.toasts.filter((toast) => toast.id !== id) })),
+
       // Reset
-      reset: () => 
+      reset: () =>
         set({
           preferences: defaultPreferences,
           nutritionSettings: defaultNutritionSettings,
-          recipes: [],
-          mealPlans: [],
-          toasts: []
+          recipes: [] as Recipe[],
+          mealPlans: [] as MealPlan[],
+          toasts: [] as ToastMessage[],
         })
     }),
     {
