@@ -19,7 +19,9 @@ export default function FoodPreferences() {
   const [newLike, setNewLike] = useState('')
   const [newDislike, setNewDislike] = useState('')
 
-  const handleAddPreference = (category: keyof typeof preferences, value: string) => {
+  type StringArrayKey = 'cuisines' | 'diets' | 'allergies' | 'dislikes' | 'likes'
+
+  const handleAddPreference = (category: StringArrayKey, value: string) => {
     if (value.trim() && !preferences[category].includes(value.trim())) {
       setPreferences(prev => ({
         ...prev,
@@ -28,10 +30,10 @@ export default function FoodPreferences() {
     }
   }
 
-  const handleRemovePreference = (category: keyof typeof preferences, value: string) => {
+  const handleRemovePreference = (category: StringArrayKey, value: string) => {
     setPreferences(prev => ({
       ...prev,
-      [category]: prev[category].filter(item => item !== value)
+      [category]: prev[category].filter((item: string) => item !== value)
     }))
   }
 
@@ -116,7 +118,7 @@ export default function FoodPreferences() {
             <CardContent>
               {/* Existing preferences */}
               <div className="flex flex-wrap gap-2 mb-4">
-                {preferences[category.key as keyof typeof preferences].map((item) => (
+                {preferences[category.key as StringArrayKey].map((item) => (
                   <Badge 
                     key={item}
                     variant="secondary"
@@ -124,7 +126,7 @@ export default function FoodPreferences() {
                   >
                     {item}
                     <button
-                      onClick={() => handleRemovePreference(category.key as keyof typeof preferences, item)}
+                      onClick={() => handleRemovePreference(category.key as StringArrayKey, item)}
                       className="hover:bg-destructive/20 rounded-full p-0.5 transition-colors"
                     >
                       <X className="h-3 w-3" />
@@ -137,13 +139,13 @@ export default function FoodPreferences() {
               {category.options.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-4">
                   {category.options.slice(0, 6).map((option) => (
-                    !preferences[category.key as keyof typeof preferences].includes(option) && (
+                    !preferences[category.key as StringArrayKey].includes(option) && (
                       <Button
                         key={option}
                         variant="ghost"
                         size="sm"
                         className="h-7 px-2 text-xs"
-                        onClick={() => handleAddPreference(category.key as keyof typeof preferences, option)}
+                        onClick={() => handleAddPreference(category.key as StringArrayKey, option)}
                       >
                         + {option}
                       </Button>
@@ -171,7 +173,7 @@ export default function FoodPreferences() {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault()
-                      handleAddPreference(category.key as keyof typeof preferences, 
+                      handleAddPreference(category.key as StringArrayKey, 
                         category.key === 'cuisines' ? newCuisine : 
                         category.key === 'diets' ? newDiet : 
                         category.key === 'allergies' ? newAllergy : 
@@ -188,7 +190,7 @@ export default function FoodPreferences() {
                 <Button
                   size="sm"
                   onClick={() => {
-                    handleAddPreference(category.key as keyof typeof preferences, 
+                    handleAddPreference(category.key as StringArrayKey, 
                       category.key === 'cuisines' ? newCuisine : 
                       category.key === 'diets' ? newDiet : 
                       category.key === 'allergies' ? newAllergy : 
