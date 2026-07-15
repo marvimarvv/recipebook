@@ -62,18 +62,14 @@ const nextConfig = withPWA({
     // iOS specific: Enable server components for PWA
     serverComponentsExternalPackages: ['next-pwa']
   },
-  // iOS specific: Headers for PWA
+  // Long-lived caching is only safe for content-hashed files, i.e. production
+  // /_next/static. Dev chunks and HTML share URLs across builds — caching them
+  // as immutable makes browsers serve stale code forever.
   async headers() {
+    if (process.env.NODE_ENV !== 'production') {
+      return []
+    }
     return [
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable'
-          }
-        ]
-      },
       {
         source: '/_next/static/:path*',
         headers: [
