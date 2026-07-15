@@ -5,6 +5,7 @@ A Progressive Web App (PWA) that lets you enter your nutrition preferences and l
 ## Features
 
 ### 🍽️ Food Preferences
+
 - Set your preferred cuisines (Italian, Mexican, Chinese, etc.)
 - Specify dietary preferences (Vegetarian, Vegan, Keto, etc.)
 - Add allergies and food restrictions
@@ -12,12 +13,14 @@ A Progressive Web App (PWA) that lets you enter your nutrition preferences and l
 - Set your cooking level (beginner, intermediate, advanced)
 
 ### ❤️ Known Recipes
+
 - Add and manage your favorite recipes
 - Track ingredients, instructions, and nutrition info
 - Mark recipes as favorites
 - View recipe details in a clean, organized format
 
 ### ⚙️ Nutrition Settings
+
 - Set daily calorie goals (1000-4000 kcal)
 - Configure macronutrient distribution (protein, carbs, fat)
 - Choose which meals to include (breakfast, lunch, dinner, snacks)
@@ -25,6 +28,7 @@ A Progressive Web App (PWA) that lets you enter your nutrition preferences and l
 - Visual macro distribution tracking
 
 ### 🤖 AI Recipe Generation
+
 - Generate complete meal plans with one click
 - AI considers your preferences and nutrition goals
 - Customize generation options:
@@ -37,6 +41,7 @@ A Progressive Web App (PWA) that lets you enter your nutrition preferences and l
 - Save generated meal plans
 
 ### 🎨 UI Features
+
 - Modern, clean design with card-based layout
 - Responsive design for mobile and desktop
 - Smooth animations and transitions
@@ -64,12 +69,14 @@ A Progressive Web App (PWA) that lets you enter your nutrition preferences and l
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/marvimarvv/recipebook.git
 cd recipebook
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 # or
@@ -79,6 +86,7 @@ pnpm install
 ```
 
 3. Run the development server:
+
 ```bash
 npm run dev
 # or
@@ -99,6 +107,7 @@ npm run start
 ## PWA Features
 
 The app includes full PWA support:
+
 - Offline functionality
 - Installable on mobile and desktop
 - Service worker for caching
@@ -146,21 +155,21 @@ To connect to a real AI service, replace the `generateMockRecipes` function in `
 
 ```typescript
 const generateRecipes = async (): Promise<GeneratedRecipe[]> => {
-  const response = await fetch('YOUR_AI_API_ENDPOINT', {
-    method: 'POST',
+  const response = await fetch("YOUR_AI_API_ENDPOINT", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer YOUR_API_KEY'
+      "Content-Type": "application/json",
+      Authorization: "Bearer YOUR_API_KEY",
     },
     body: JSON.stringify({
       preferences: preferences,
       nutrition: nutritionSettings,
-      options: generationOptions
-    })
+      options: generationOptions,
+    }),
   });
-  
+
   return response.json();
-}
+};
 ```
 
 ### Theming
@@ -169,9 +178,9 @@ Edit the CSS variables in `src/app/globals.css` to change the color scheme:
 
 ```css
 :root {
-  --primary: 0 72% 51%;        /* Red */
-  --secondary: 175 54% 58%;    /* Teal */
-  --accent: 45 93% 58%;       /* Yellow */
+  --primary: 0 72% 51%; /* Red */
+  --secondary: 175 54% 58%; /* Teal */
+  --accent: 45 93% 58%; /* Yellow */
   /* ... */
 }
 ```

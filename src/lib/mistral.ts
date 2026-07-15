@@ -1,12 +1,14 @@
-"use client"
+"use client";
 
 // Mistral API Configuration
-const MISTRAL_API_KEY = 'hYXRYG46tSAXPlsUyaJkaANVDNJwRlRI';
-const MISTRAL_API_URL = 'https://api.mistral.ai/v1/chat/completions';
+// API key intentionally left blank for now to avoid misuse. Provide one via the
+// NEXT_PUBLIC_MISTRAL_API_KEY environment variable to re-enable live requests.
+const MISTRAL_API_KEY = process.env.NEXT_PUBLIC_MISTRAL_API_KEY ?? "";
+const MISTRAL_API_URL = "https://api.mistral.ai/v1/chat/completions";
 
 // Types for Mistral API
 export interface MistralMessage {
-  role: 'user' | 'assistant' | 'system';
+  role: "user" | "assistant" | "system";
   content: string;
 }
 
@@ -39,66 +41,65 @@ export interface MistralResponse {
 }
 
 // Default model
-const DEFAULT_MODEL = 'mistral-tiny';
+const DEFAULT_MODEL = "mistral-tiny";
 
 // Generate a meal plan using Mistral AI
 export async function generateMealPlanWithMistral(
   preferences: any,
   nutritionSettings: any,
-  options: any
+  options: any,
 ): Promise<string> {
   try {
     // Build the prompt based on user preferences and settings
     const prompt = buildMealPlanPrompt(preferences, nutritionSettings, options);
-    
+
     const requestData: MistralRequest = {
       model: DEFAULT_MODEL,
       messages: [
         {
-          role: 'system',
-          content: `You are a professional nutritionist and chef. You create personalized meal plans based on user preferences, dietary restrictions, and nutrition goals. Always respond with valid JSON in the exact format specified.`
+          role: "system",
+          content: `You are a professional nutritionist and chef. You create personalized meal plans based on user preferences, dietary restrictions, and nutrition goals. Always respond with valid JSON in the exact format specified.`,
         },
         {
-          role: 'user',
-          content: prompt
-        }
+          role: "user",
+          content: prompt,
+        },
       ],
       temperature: 0.7,
       max_tokens: 2000,
-      stream: false
+      stream: false,
     };
 
     const response = await fetch(MISTRAL_API_URL, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${MISTRAL_API_KEY}`
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${MISTRAL_API_KEY}`,
       },
-      body: JSON.stringify(requestData)
+      body: JSON.stringify(requestData),
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to generate meal plan');
+      throw new Error(errorData.message || "Failed to generate meal plan");
     }
 
     const data: MistralResponse = await response.json();
-    
+
     // Extract the content from the response
-    const content = data.choices[0]?.message?.content || '';
-    
+    const content = data.choices[0]?.message?.content || "";
+
     // Try to parse the JSON response
     try {
       // Sometimes Mistral wraps the JSON in markdown code blocks
-      const cleanedContent = content.replace(/```json\n?|```/g, '').trim();
+      const cleanedContent = content.replace(/```json\n?|```/g, "").trim();
       return cleanedContent;
     } catch (parseError) {
-      console.error('Failed to parse AI response:', parseError);
-      throw new Error('Invalid response format from AI');
+      console.error("Failed to parse AI response:", parseError);
+      throw new Error("Invalid response format from AI");
     }
-    
   } catch (error) {
-    console.error('Mistral API error:', error);
+    console.error("Mistral API error:", error);
     throw error;
   }
 }
@@ -107,40 +108,48 @@ export async function generateMealPlanWithMistral(
 function buildMealPlanPrompt(
   preferences: any,
   nutritionSettings: any,
-  options: any
+  options: any,
 ): string {
   // Build preferences string
   const preferencesParts = [];
-  
+
   if (preferences.cuisines.length > 0) {
-    preferencesParts.push(`Preferred cuisines: ${preferences.cuisines.join(', ')}`);
+    preferencesParts.push(
+      `Preferred cuisines: ${preferences.cuisines.join(", ")}`,
+    );
   }
   if (preferences.diets.length > 0) {
-    preferencesParts.push(`Dietary preferences: ${preferences.diets.join(', ')}`);
+    preferencesParts.push(
+      `Dietary preferences: ${preferences.diets.join(", ")}`,
+    );
   }
   if (preferences.allergies.length > 0) {
-    preferencesParts.push(`Allergies to avoid: ${preferences.allergies.join(', ')}`);
+    preferencesParts.push(
+      `Allergies to avoid: ${preferences.allergies.join(", ")}`,
+    );
   }
   if (preferences.likes.length > 0) {
-    preferencesParts.push(`Liked foods: ${preferences.likes.join(', ')}`);
+    preferencesParts.push(`Liked foods: ${preferences.likes.join(", ")}`);
   }
   if (preferences.dislikes.length > 0) {
-    preferencesParts.push(`Disliked foods: ${preferences.dislikes.join(', ')}`);
+    preferencesParts.push(`Disliked foods: ${preferences.dislikes.join(", ")}`);
   }
-  
+
   preferencesParts.push(`Cooking level: ${preferences.cookingLevel}`);
   preferencesParts.push(`Meals per day: ${preferences.mealFrequency}`);
 
   // Build nutrition settings string
   const nutritionParts = [];
   nutritionParts.push(`Daily calories: ${nutritionSettings.dailyCalories}`);
-  nutritionParts.push(`Macronutrient distribution: ${nutritionSettings.proteinGoal}% protein, ${nutritionSettings.carbGoal}% carbs, ${nutritionSettings.fatGoal}% fat`);
-  
+  nutritionParts.push(
+    `Macronutrient distribution: ${nutritionSettings.proteinGoal}% protein, ${nutritionSettings.carbGoal}% carbs, ${nutritionSettings.fatGoal}% fat`,
+  );
+
   // Build meal plan settings
   const mealPlanParts = [];
-  if (nutritionSettings.mealPlan.breakfast) mealPlanParts.push('breakfast');
-  if (nutritionSettings.mealPlan.lunch) mealPlanParts.push('lunch');
-  if (nutritionSettings.mealPlan.dinner) mealPlanParts.push('dinner');
+  if (nutritionSettings.mealPlan.breakfast) mealPlanParts.push("breakfast");
+  if (nutritionSettings.mealPlan.lunch) mealPlanParts.push("lunch");
+  if (nutritionSettings.mealPlan.dinner) mealPlanParts.push("dinner");
   if (nutritionSettings.mealPlan.snacks) {
     mealPlanParts.push(`${nutritionSettings.mealPlan.snackCount} snacks`);
   }
@@ -149,19 +158,19 @@ function buildMealPlanPrompt(
   const prompt = `Generate a personalized meal plan for today with the following requirements:
 
 USER PREFERENCES:
-${preferencesParts.join('\n')}
+${preferencesParts.join("\n")}
 
 NUTRITION GOALS:
-${nutritionParts.join('\n')}
+${nutritionParts.join("\n")}
 
 MEAL PLAN SETTINGS:
-Include: ${mealPlanParts.join(', ') || 'all meals'}
+Include: ${mealPlanParts.join(", ") || "all meals"}
 
 GENERATION OPTIONS:
 Cooking time: ${options.cookingTime}
 Difficulty: ${options.difficulty}
-Include all preferences: ${options.includeAllPreferences ? 'yes' : 'no'}
-Randomize: ${options.randomize ? 'yes' : 'no'}
+Include all preferences: ${options.includeAllPreferences ? "yes" : "no"}
+Randomize: ${options.randomize ? "yes" : "no"}
 
 RESPONSE FORMAT:
 Respond with a valid JSON object containing the meal plan in this exact format:
@@ -212,27 +221,28 @@ export function parseMealPlanResponse(response: string): any {
     const data = JSON.parse(response);
     return data.mealPlan || data;
   } catch (error) {
-    console.error('Failed to parse meal plan response:', error);
+    console.error("Failed to parse meal plan response:", error);
     return null;
   }
 }
 
 // Health check for Mistral API
 export async function checkMistralAPI(): Promise<boolean> {
+  if (!MISTRAL_API_KEY) return false;
   try {
     const response = await fetch(MISTRAL_API_URL, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${MISTRAL_API_KEY}`
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${MISTRAL_API_KEY}`,
       },
       body: JSON.stringify({
         model: DEFAULT_MODEL,
-        messages: [{ role: 'user', content: 'Say "hello"' }],
+        messages: [{ role: "user", content: 'Say "hello"' }],
         temperature: 0.7,
         max_tokens: 10,
-        stream: false
-      })
+        stream: false,
+      }),
     });
     return response.ok;
   } catch (error) {

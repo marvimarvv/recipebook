@@ -23,7 +23,7 @@ function makeGrainyTexture(
   from: string,
   to: string,
   diagonal = false,
-  size = 320
+  size = 320,
 ): THREE.CanvasTexture {
   const c = document.createElement("canvas");
   c.width = size;
@@ -63,7 +63,7 @@ function remapUVsToXY(geo: THREE.BufferGeometry, extent: number) {
     uv.setXY(
       i,
       pos.getX(i) / (2 * extent) + 0.5,
-      pos.getY(i) / (2 * extent) + 0.5
+      pos.getY(i) / (2 * extent) + 0.5,
     );
   }
   uv.needsUpdate = true;
@@ -71,12 +71,15 @@ function remapUVsToXY(geo: THREE.BufferGeometry, extent: number) {
 
 // Smooths a lathe profile with a low-tension Catmull-Rom spline so rounded
 // fruit silhouettes (pear/avocado, carrot) don't show polygon kinks.
-function smoothProfile(points: THREE.Vector2[], samples: number): THREE.Vector2[] {
+function smoothProfile(
+  points: THREE.Vector2[],
+  samples: number,
+): THREE.Vector2[] {
   const curve = new THREE.CatmullRomCurve3(
     points.map((p) => new THREE.Vector3(p.x, p.y, 0)),
     false,
     "catmullrom",
-    0.15
+    0.15,
   );
   return curve
     .getPoints(samples)
@@ -87,7 +90,7 @@ function useGrainy(from: string, to?: string, diagonal = false) {
   const toColor = to ?? from;
   return useMemo(
     () => makeGrainyTexture(from, toColor, diagonal),
-    [from, toColor, diagonal]
+    [from, toColor, diagonal],
   );
 }
 
@@ -296,7 +299,7 @@ function Lemon() {
         emissive: new THREE.Color("#e0a828"),
         emissiveIntensity: 0.1,
       }),
-    [gradient]
+    [gradient],
   );
   return (
     <group>
@@ -465,12 +468,7 @@ function OrbitRing({
 // ---------------------------------------------------------------------------
 
 type IngredientKind =
-  | "tomato"
-  | "avocado"
-  | "lemon"
-  | "blueberry"
-  | "carrot"
-  | "herb";
+  "tomato" | "avocado" | "lemon" | "blueberry" | "carrot" | "herb";
 
 const KIND_TO_COMPONENT: Record<IngredientKind, () => JSX.Element> = {
   tomato: Tomato,
@@ -627,7 +625,7 @@ function Scene() {
 
 export default function HeroScene() {
   return (
-    <div className="relative w-full h-[200px] md:h-[360px] pointer-events-none">
+    <div className="pointer-events-none relative h-[340px] w-full md:h-[560px]">
       <Canvas
         dpr={[1, 2]}
         camera={{ position: [0, 1.4, 6.5], fov: 45 }}

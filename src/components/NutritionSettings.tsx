@@ -1,73 +1,106 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { Settings, Flame, Dumbbell, Wheat, Droplets, TrendingUp, RotateCcw } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Slider } from '@/components/ui/slider'
-import { useStore } from '@/store/useStore'
+import { useState } from "react";
+import { motion } from "framer-motion";
+import {
+  Settings,
+  Flame,
+  Dumbbell,
+  Wheat,
+  Droplets,
+  TrendingUp,
+  RotateCcw,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Slider } from "@/components/ui/slider";
+import { useStore } from "@/store/useStore";
 
 export default function NutritionSettings() {
-  const nutritionSettings = useStore(state => state.nutritionSettings)
-  const setNutritionSettings = useStore(state => state.setNutritionSettings)
+  const nutritionSettings = useStore((state) => state.nutritionSettings);
+  const setNutritionSettings = useStore((state) => state.setNutritionSettings);
 
-  const [caloriesInput, setCaloriesInput] = useState(nutritionSettings.dailyCalories)
-  const [proteinInput, setProteinInput] = useState(nutritionSettings.proteinGoal)
-  const [carbsInput, setCarbsInput] = useState(nutritionSettings.carbGoal)
-  const [fatInput, setFatInput] = useState(nutritionSettings.fatGoal)
+  const [caloriesInput, setCaloriesInput] = useState(
+    nutritionSettings.dailyCalories,
+  );
+  const [proteinInput, setProteinInput] = useState(
+    nutritionSettings.proteinGoal,
+  );
+  const [carbsInput, setCarbsInput] = useState(nutritionSettings.carbGoal);
+  const [fatInput, setFatInput] = useState(nutritionSettings.fatGoal);
 
   const handleCaloriesChange = (value: number[]) => {
-    setCaloriesInput(value[0])
-    setNutritionSettings({ ...nutritionSettings, dailyCalories: value[0] })
-  }
+    setCaloriesInput(value[0]);
+    setNutritionSettings({ ...nutritionSettings, dailyCalories: value[0] });
+  };
 
-  const handleMacroChange = (macro: 'proteinGoal' | 'carbGoal' | 'fatGoal', value: number[]) => {
-    const newSettings = { ...nutritionSettings, [macro]: value[0] }
-    
+  const handleMacroChange = (
+    macro: "proteinGoal" | "carbGoal" | "fatGoal",
+    value: number[],
+  ) => {
+    const newSettings = { ...nutritionSettings, [macro]: value[0] };
+
     // Ensure macros add up to 100%
-    let total = newSettings.proteinGoal + newSettings.carbGoal + newSettings.fatGoal
+    let total =
+      newSettings.proteinGoal + newSettings.carbGoal + newSettings.fatGoal;
     if (total > 100) {
       // Adjust other macros proportionally
-      const excess = total - 100
-      if (macro === 'proteinGoal') {
-        newSettings.carbGoal = Math.max(0, newSettings.carbGoal - excess / 2)
-        newSettings.fatGoal = Math.max(0, newSettings.fatGoal - excess / 2)
-      } else if (macro === 'carbGoal') {
-        newSettings.proteinGoal = Math.max(0, newSettings.proteinGoal - excess / 2)
-        newSettings.fatGoal = Math.max(0, newSettings.fatGoal - excess / 2)
+      const excess = total - 100;
+      if (macro === "proteinGoal") {
+        newSettings.carbGoal = Math.max(0, newSettings.carbGoal - excess / 2);
+        newSettings.fatGoal = Math.max(0, newSettings.fatGoal - excess / 2);
+      } else if (macro === "carbGoal") {
+        newSettings.proteinGoal = Math.max(
+          0,
+          newSettings.proteinGoal - excess / 2,
+        );
+        newSettings.fatGoal = Math.max(0, newSettings.fatGoal - excess / 2);
       } else {
-        newSettings.proteinGoal = Math.max(0, newSettings.proteinGoal - excess / 2)
-        newSettings.carbGoal = Math.max(0, newSettings.carbGoal - excess / 2)
+        newSettings.proteinGoal = Math.max(
+          0,
+          newSettings.proteinGoal - excess / 2,
+        );
+        newSettings.carbGoal = Math.max(0, newSettings.carbGoal - excess / 2);
       }
     }
-    
-    setNutritionSettings(newSettings)
-    setProteinInput(newSettings.proteinGoal)
-    setCarbsInput(newSettings.carbGoal)
-    setFatInput(newSettings.fatGoal)
-  }
 
-  const handleMealPlanToggle = (mealType: keyof typeof nutritionSettings.mealPlan) => {
-    if (mealType === 'snackCount') return
+    setNutritionSettings(newSettings);
+    setProteinInput(newSettings.proteinGoal);
+    setCarbsInput(newSettings.carbGoal);
+    setFatInput(newSettings.fatGoal);
+  };
+
+  const handleMealPlanToggle = (
+    mealType: keyof typeof nutritionSettings.mealPlan,
+  ) => {
+    if (mealType === "snackCount") return;
     setNutritionSettings({
       ...nutritionSettings,
       mealPlan: {
         ...nutritionSettings.mealPlan,
-        [mealType]: !nutritionSettings.mealPlan[mealType as keyof typeof nutritionSettings.mealPlan]
-      }
-    })
-  }
+        [mealType]:
+          !nutritionSettings.mealPlan[
+            mealType as keyof typeof nutritionSettings.mealPlan
+          ],
+      },
+    });
+  };
 
   const handleSnackCountChange = (count: number) => {
     setNutritionSettings({
       ...nutritionSettings,
       mealPlan: {
         ...nutritionSettings.mealPlan,
-        snackCount: Math.max(0, Math.min(5, count))
-      }
-    })
-  }
+        snackCount: Math.max(0, Math.min(5, count)),
+      },
+    });
+  };
 
   const handleReset = () => {
     setNutritionSettings({
@@ -80,47 +113,47 @@ export default function NutritionSettings() {
         lunch: true,
         dinner: true,
         snacks: true,
-        snackCount: 2
-      }
-    })
-    setCaloriesInput(2000)
-    setProteinInput(30)
-    setCarbsInput(40)
-    setFatInput(30)
-  }
+        snackCount: 2,
+      },
+    });
+    setCaloriesInput(2000);
+    setProteinInput(30);
+    setCarbsInput(40);
+    setFatInput(30);
+  };
 
   const macroCards = [
     {
-      key: 'proteinGoal',
-      title: 'Protein',
-      description: 'Essential for muscle growth and repair',
+      key: "proteinGoal",
+      title: "Protein",
+      description: "Essential for muscle growth and repair",
       icon: <Dumbbell className="h-6 w-6" />,
       value: proteinInput,
-      color: 'from-blue-500 to-cyan-500',
-      onChange: (value: number[]) => handleMacroChange('proteinGoal', value)
+      color: "from-blue-500 to-cyan-500",
+      onChange: (value: number[]) => handleMacroChange("proteinGoal", value),
     },
     {
-      key: 'carbGoal',
-      title: 'Carbohydrates',
-      description: 'Primary energy source',
+      key: "carbGoal",
+      title: "Carbohydrates",
+      description: "Primary energy source",
       icon: <Wheat className="h-6 w-6" />,
       value: carbsInput,
-      color: 'from-amber-500 to-orange-500',
-      onChange: (value: number[]) => handleMacroChange('carbGoal', value)
+      color: "from-amber-500 to-orange-500",
+      onChange: (value: number[]) => handleMacroChange("carbGoal", value),
     },
     {
-      key: 'fatGoal',
-      title: 'Fats',
-      description: 'Important for hormone production',
+      key: "fatGoal",
+      title: "Fats",
+      description: "Important for hormone production",
       icon: <Droplets className="h-6 w-6" />,
       value: fatInput,
-      color: 'from-green-500 to-emerald-500',
-      onChange: (value: number[]) => handleMacroChange('fatGoal', value)
-    }
-  ]
+      color: "from-green-500 to-emerald-500",
+      onChange: (value: number[]) => handleMacroChange("fatGoal", value),
+    },
+  ];
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
@@ -128,10 +161,12 @@ export default function NutritionSettings() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Nutrition Settings</h2>
-          <p className="text-muted-foreground">Set your daily calorie and macronutrient goals</p>
+          <p className="text-muted-foreground">
+            Set your daily calorie and macronutrient goals
+          </p>
         </div>
         <Button variant="outline" size="sm" onClick={handleReset}>
-          <RotateCcw className="h-4 w-4 mr-2" />
+          <RotateCcw className="mr-2 h-4 w-4" />
           Reset
         </Button>
       </div>
@@ -164,11 +199,17 @@ export default function NutritionSettings() {
                 type="number"
                 value={caloriesInput}
                 onChange={(e) => {
-                  const value = Math.max(1000, Math.min(4000, parseInt(e.target.value) || 2000))
-                  setCaloriesInput(value)
-                  setNutritionSettings({ ...nutritionSettings, dailyCalories: value })
+                  const value = Math.max(
+                    1000,
+                    Math.min(4000, parseInt(e.target.value) || 2000),
+                  );
+                  setCaloriesInput(value);
+                  setNutritionSettings({
+                    ...nutritionSettings,
+                    dailyCalories: value,
+                  });
                 }}
-                className="text-3xl font-bold border-none bg-transparent text-center focus:outline-none focus:ring-0 w-32"
+                className="w-32 border-none bg-transparent text-center text-3xl font-bold focus:outline-none focus:ring-0"
               />
               <span className="text-muted-foreground">calories/day</span>
             </div>
@@ -183,7 +224,7 @@ export default function NutritionSettings() {
       </Card>
 
       {/* Macronutrient Distribution */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         {macroCards.map((macro) => (
           <Card key={macro.key}>
             <CardHeader>
@@ -208,7 +249,7 @@ export default function NutritionSettings() {
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold">{macro.value}%</span>
                 </div>
-                <div className="h-2 rounded-full bg-muted overflow-hidden">
+                <div className="h-2 overflow-hidden rounded-full bg-muted">
                   <motion.div
                     className={`h-full bg-gradient-to-r ${macro.color}`}
                     initial={{ width: 0 }}
@@ -247,11 +288,13 @@ export default function NutritionSettings() {
               </div>
               <div className="text-center">
                 <div className="font-medium">Total</div>
-                <div className="text-muted-foreground">{proteinInput + carbsInput + fatInput}%</div>
+                <div className="text-muted-foreground">
+                  {proteinInput + carbsInput + fatInput}%
+                </div>
               </div>
             </div>
-            
-            <div className="h-4 rounded-full bg-muted overflow-hidden">
+
+            <div className="h-4 overflow-hidden rounded-full bg-muted">
               <div
                 className="h-full bg-gradient-to-r from-blue-500 to-cyan-500"
                 style={{ width: `${proteinInput}%` }}
@@ -265,14 +308,15 @@ export default function NutritionSettings() {
                 style={{ width: `${fatInput}%` }}
               />
             </div>
-            
+
             {proteinInput + carbsInput + fatInput !== 100 && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-sm text-amber-600 dark:text-amber-400 text-center"
+                className="text-center text-sm text-amber-600 dark:text-amber-400"
               >
-                Macros should add up to 100% ({proteinInput + carbsInput + fatInput}%)
+                Macros should add up to 100% (
+                {proteinInput + carbsInput + fatInput}%)
               </motion.div>
             )}
           </div>
@@ -288,24 +332,34 @@ export default function NutritionSettings() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {['breakfast', 'lunch', 'dinner', 'snacks'].map((mealType) => (
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            {["breakfast", "lunch", "dinner", "snacks"].map((mealType) => (
               <Button
                 key={mealType}
-                variant={nutritionSettings.mealPlan[mealType as keyof typeof nutritionSettings.mealPlan] ? 'default' : 'outline'}
-                onClick={() => handleMealPlanToggle(mealType as keyof typeof nutritionSettings.mealPlan)}
+                variant={
+                  nutritionSettings.mealPlan[
+                    mealType as keyof typeof nutritionSettings.mealPlan
+                  ]
+                    ? "default"
+                    : "outline"
+                }
+                onClick={() =>
+                  handleMealPlanToggle(
+                    mealType as keyof typeof nutritionSettings.mealPlan,
+                  )
+                }
                 className="capitalize"
               >
                 {mealType}
               </Button>
             ))}
           </div>
-          
+
           {nutritionSettings.mealPlan.snacks && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="mt-4 pt-4 border-t"
+              animate={{ opacity: 1, height: "auto" }}
+              className="mt-4 border-t pt-4"
             >
               <div className="flex items-center justify-between">
                 <label className="font-medium">Number of Snacks</label>
@@ -314,19 +368,27 @@ export default function NutritionSettings() {
                     variant="outline"
                     size="icon"
                     className="h-8 w-8"
-                    onClick={() => handleSnackCountChange(nutritionSettings.mealPlan.snackCount - 1)}
+                    onClick={() =>
+                      handleSnackCountChange(
+                        nutritionSettings.mealPlan.snackCount - 1,
+                      )
+                    }
                     disabled={nutritionSettings.mealPlan.snackCount <= 0}
                   >
                     -
                   </Button>
-                  <span className="text-lg font-medium min-w-[2rem] text-center">
+                  <span className="min-w-[2rem] text-center text-lg font-medium">
                     {nutritionSettings.mealPlan.snackCount}
                   </span>
                   <Button
                     variant="outline"
                     size="icon"
                     className="h-8 w-8"
-                    onClick={() => handleSnackCountChange(nutritionSettings.mealPlan.snackCount + 1)}
+                    onClick={() =>
+                      handleSnackCountChange(
+                        nutritionSettings.mealPlan.snackCount + 1,
+                      )
+                    }
                     disabled={nutritionSettings.mealPlan.snackCount >= 5}
                   >
                     +
@@ -339,7 +401,7 @@ export default function NutritionSettings() {
       </Card>
 
       {/* Calorie Calculation Info */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         className="text-center text-sm text-muted-foreground"
@@ -347,10 +409,18 @@ export default function NutritionSettings() {
         <p>
           Based on your settings, each meal should contain approximately:
           <span className="font-medium text-foreground">
-            {Math.round(caloriesInput / (Object.values(nutritionSettings.mealPlan).filter(Boolean).length + (nutritionSettings.mealPlan.snacks ? nutritionSettings.mealPlan.snackCount : 0)))} calories
+            {Math.round(
+              caloriesInput /
+                (Object.values(nutritionSettings.mealPlan).filter(Boolean)
+                  .length +
+                  (nutritionSettings.mealPlan.snacks
+                    ? nutritionSettings.mealPlan.snackCount
+                    : 0)),
+            )}{" "}
+            calories
           </span>
         </p>
       </motion.div>
     </motion.div>
-  )
+  );
 }
