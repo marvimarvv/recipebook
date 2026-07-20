@@ -1,16 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
-import { ChefHat, Heart, Settings, Sparkles, Utensils } from "lucide-react";
+import {
+  ChefHat,
+  Heart,
+  RotateCcw,
+  Settings,
+  Sparkles,
+  Utensils,
+} from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import FoodPreferences from "@/components/FoodPreferences";
 import KnownRecipes from "@/components/KnownRecipes";
 import NutritionSettings from "@/components/NutritionSettings";
 import AIRecipeGenerator from "@/components/AIRecipeGenerator";
+import OnboardingWizard from "@/components/OnboardingWizard";
 import Toast from "@/components/Toast";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import { useStore } from "@/store/useStore";
 
 const HeroScene = dynamic(() => import("@/components/HeroScene"), {
   ssr: false,
@@ -18,6 +39,44 @@ const HeroScene = dynamic(() => import("@/components/HeroScene"), {
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("preferences");
+  const [hasHydrated, setHasHydrated] = useState(false);
+  const hasCompletedOnboarding = useStore(
+    (state) => state.hasCompletedOnboarding,
+  );
+  const restartOnboarding = useStore((state) => state.restartOnboarding);
+
+  // The persisted onboarding flag rehydrates from localStorage *after* the
+  // first client render, so wait for hydration before deciding whether to
+  // show the wizard - otherwise returning users would see a flash of it.
+  // `useStore.persist` only exists in a browser (zustand skips attaching it
+  // when `localStorage` is unavailable, e.g. during Next.js server
+  // prerendering), so this must only ever run client-side inside an effect,
+  // never during render.
+  useEffect(() => {
+    const persistApi = useStore.persist;
+    if (!persistApi || persistApi.hasHydrated()) {
+      setHasHydrated(true);
+      return;
+    }
+    return persistApi.onFinishHydration(() => setHasHydrated(true));
+  }, []);
+
+  if (!hasHydrated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/50" />
+    );
+  }
+
+  if (!hasCompletedOnboarding) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/50">
+        <main className="container py-12">
+          <OnboardingWizard onFinish={() => setActiveTab("generate")} />
+        </main>
+        <Toast />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/50">
@@ -63,6 +122,30 @@ export default function Home() {
                 </TabsTrigger>
               </TabsList>
             </nav>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="shrink-0">
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">Restart setup</span>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Restart the setup wizard?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This walks you through Preferences, Recipes, and Nutrition
+                    again and generates a new week when you finish. Your
+                    existing saved recipes and meal plans won&apos;t be deleted.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => restartOnboarding()}>
+                    Restart
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </header>
 

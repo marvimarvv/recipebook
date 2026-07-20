@@ -98,6 +98,29 @@ export interface AIGenerationOptions {
   difficulty: "easy" | "medium" | "hard";
 }
 
+// A full week (7 days) meal plan made up of individual daily plans
+export interface WeekMealPlan {
+  id: string;
+  weekStartDate: Date;
+  days: MealPlan[]; // exactly 7 entries, Monday - Sunday
+  totalNutrition: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
+}
+
+export const WEEKDAY_LABELS = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+] as const;
+
 // UI State Types
 export interface ToastMessage {
   id: string;
