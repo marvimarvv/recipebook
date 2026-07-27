@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
@@ -24,9 +24,17 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useStore } from "@/store/useStore";
-import { Recipe } from "@/types";
+import { Recipe, StepHeaderAction } from "@/types";
 
-export default function KnownRecipes() {
+interface KnownRecipesProps {
+  hideHeader?: boolean;
+  onRegisterAction?: (action: StepHeaderAction | null) => void;
+}
+
+export default function KnownRecipes({
+  hideHeader,
+  onRegisterAction,
+}: KnownRecipesProps = {}) {
   const recipes = useStore((state) => state.recipes);
   const addRecipe = useStore((state) => state.addRecipe);
   const deleteRecipe = useStore((state) => state.deleteRecipe);
@@ -91,6 +99,19 @@ export default function KnownRecipes() {
     setSelectedRecipe(recipe);
     setIsModalOpen(true);
   };
+
+  const handleOpenAddRecipe = () => setIsModalOpen(true);
+
+  useEffect(() => {
+    if (!onRegisterAction) return;
+    onRegisterAction({
+      label: "Add Recipe",
+      icon: Plus,
+      onClick: handleOpenAddRecipe,
+    });
+    return () => onRegisterAction(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onRegisterAction]);
 
   const sampleRecipes: Recipe[] = [
     {
@@ -194,18 +215,20 @@ export default function KnownRecipes() {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Known Recipes</h2>
-          <p className="text-muted-foreground">
-            Save and manage your favorite recipes
-          </p>
+      {!hideHeader && (
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold">Known Recipes</h2>
+            <p className="text-muted-foreground">
+              Save and manage your favorite recipes
+            </p>
+          </div>
+          <Button onClick={handleOpenAddRecipe}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Recipe
+          </Button>
         </div>
-        <Button onClick={() => setIsModalOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Recipe
-        </Button>
-      </div>
+      )}
 
       {/* Recipe Grid */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">

@@ -1,3 +1,12 @@
+import type { LucideIcon } from "lucide-react";
+
+// Shared UI Types
+export interface StepHeaderAction {
+  label: string;
+  icon?: LucideIcon;
+  onClick: () => void;
+}
+
 // Recipe Types
 export interface Recipe {
   id: string;

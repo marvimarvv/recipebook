@@ -107,7 +107,7 @@ const defaultNutritionSettings: NutritionSettings = {
     breakfast: true,
     lunch: true,
     dinner: true,
-    snacks: true,
+    snacks: false,
     snackCount: 2,
   },
 };

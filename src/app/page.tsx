@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import FoodPreferences from "@/components/FoodPreferences";
 import KnownRecipes from "@/components/KnownRecipes";
 import NutritionSettings from "@/components/NutritionSettings";
+import AdditionalSettings from "@/components/AdditionalSettings";
 import AIRecipeGenerator from "@/components/AIRecipeGenerator";
 import OnboardingWizard from "@/components/OnboardingWizard";
 import Toast from "@/components/Toast";
@@ -181,7 +182,10 @@ export default function Home() {
             transition={{ duration: 0.3 }}
           >
             <TabsContent value="preferences">
-              <FoodPreferences />
+              <div className="space-y-6">
+                <FoodPreferences />
+                <AdditionalSettings />
+              </div>
             </TabsContent>
             <TabsContent value="recipes">
               <KnownRecipes />

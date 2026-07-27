@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChefHat,
-  Heart,
   Settings,
+  SlidersHorizontal,
   ArrowLeft,
   ArrowRight,
   Sparkles,
@@ -13,11 +13,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import FoodPreferences from "@/components/FoodPreferences";
-import KnownRecipes from "@/components/KnownRecipes";
 import NutritionSettings from "@/components/NutritionSettings";
+import AdditionalSettings from "@/components/AdditionalSettings";
 import { useStore } from "@/store/useStore";
 import { useMealPlanGeneration } from "@/hooks/useMealPlanGeneration";
 import { checkMistralAPI } from "@/lib/mistral";
+import { StepHeaderAction } from "@/types";
 
 interface OnboardingWizardProps {
   onFinish: () => void;
@@ -32,28 +33,37 @@ const STEPS = [
     Component: FoodPreferences,
   },
   {
-    key: "recipes",
-    title: "Add recipes you already love",
-    description: "Optional - save any favorites you already know how to make.",
-    icon: Heart,
-    Component: KnownRecipes,
-  },
-  {
     key: "nutrition",
     title: "Set your nutrition goals",
     description: "Daily calories and macro targets.",
     icon: Settings,
     Component: NutritionSettings,
   },
+  {
+    key: "additional",
+    title: "Fine-tune your recipe experience",
+    description: "Cooking skill level, meal plan, and meals per day.",
+    icon: SlidersHorizontal,
+    Component: AdditionalSettings,
+  },
 ] as const;
 
 export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
   const [step, setStep] = useState(0);
+  const [headerAction, setHeaderAction] = useState<StepHeaderAction | null>(
+    null,
+  );
   const completeOnboarding = useStore((state) => state.completeOnboarding);
   const startGeneration = useStore((state) => state.startGeneration);
   const { generateWeek } = useMealPlanGeneration();
 
+  const registerHeaderAction = useCallback(
+    (action: StepHeaderAction | null) => setHeaderAction(action),
+    [],
+  );
+
   const isLastStep = step === STEPS.length - 1;
+  const isFirstStep = step === 0;
   const current = STEPS[step];
 
   const handleSkip = () => {
@@ -126,27 +136,48 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.25 }}
         >
-          <div className="mb-4 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary">
-              <current.icon className="h-5 w-5 text-primary-foreground" />
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary">
+                <current.icon className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold">{current.title}</h2>
+                <p className="text-sm text-muted-foreground">
+                  {current.description}
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-xl font-semibold">{current.title}</h2>
-              <p className="text-sm text-muted-foreground">
-                {current.description}
-              </p>
-            </div>
+            {headerAction && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={headerAction.onClick}
+              >
+                {headerAction.icon && (
+                  <headerAction.icon className="mr-2 h-4 w-4" />
+                )}
+                {headerAction.label}
+              </Button>
+            )}
           </div>
 
-          <CurrentComponent />
+          <CurrentComponent
+            hideHeader
+            onRegisterAction={registerHeaderAction}
+          />
         </motion.div>
       </AnimatePresence>
 
-      <div className="mt-8 flex items-center justify-between">
-        <Button variant="outline" onClick={handleBack} disabled={step === 0}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
+      <div className="sticky bottom-5 z-50 mt-8 flex items-center justify-between rounded-lg border bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        {!isFirstStep ? (
+          <Button variant="outline" onClick={handleBack}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+        ) : (
+          <span />
+        )}
         <Button onClick={handleNext}>
           {isLastStep ? (
             <>
