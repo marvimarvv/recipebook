@@ -11,8 +11,12 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { HoverArrowCursor } from "@/components/ui/hover-arrow-cursor";
 import { Progress } from "@/components/ui/progress";
-import FoodPreferences from "@/components/FoodPreferences";
+import PreferenceCategoryCards, {
+  createEmptyPreferenceCardsProgress,
+  type PreferenceCardsProgress,
+} from "@/components/PreferenceCategoryCards";
 import NutritionSettings from "@/components/NutritionSettings";
 import AdditionalSettings from "@/components/AdditionalSettings";
 import { useStore } from "@/store/useStore";
@@ -28,9 +32,9 @@ const STEPS = [
   {
     key: "preferences",
     title: "Tell us your food preferences",
-    description: "Cuisines, diets, allergies, likes and dislikes.",
+    description: "Pick what you like, one category at a time.",
     icon: ChefHat,
-    Component: FoodPreferences,
+    Component: PreferenceCategoryCards,
   },
   {
     key: "nutrition",
@@ -53,6 +57,8 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
   const [headerAction, setHeaderAction] = useState<StepHeaderAction | null>(
     null,
   );
+  const [preferenceProgress, setPreferenceProgress] =
+    useState<PreferenceCardsProgress>(createEmptyPreferenceCardsProgress);
   const completeOnboarding = useStore((state) => state.completeOnboarding);
   const startGeneration = useStore((state) => state.startGeneration);
   const { generateWeek } = useMealPlanGeneration();
@@ -162,10 +168,19 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
             )}
           </div>
 
-          <CurrentComponent
-            hideHeader
-            onRegisterAction={registerHeaderAction}
-          />
+          {step === 0 ? (
+            <PreferenceCategoryCards
+              hideHeader
+              onRegisterAction={registerHeaderAction}
+              progress={preferenceProgress}
+              onProgressChange={setPreferenceProgress}
+            />
+          ) : (
+            <CurrentComponent
+              hideHeader
+              onRegisterAction={registerHeaderAction}
+            />
+          )}
         </motion.div>
       </AnimatePresence>
 
@@ -178,19 +193,30 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
         ) : (
           <span />
         )}
-        <Button onClick={handleNext}>
-          {isLastStep ? (
-            <>
-              <Sparkles className="mr-2 h-4 w-4" />
-              Generate My Week
-            </>
-          ) : (
-            <>
-              Next
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </>
-          )}
-        </Button>
+        {isLastStep ? (
+          <Button onClick={handleNext}>
+            <Sparkles className="mr-2 h-4 w-4" />
+            Generate My Week
+          </Button>
+        ) : (
+          <HoverArrowCursor>
+            {({ x, y, labelRef }) => (
+              <Button
+                onClick={handleNext}
+                className="transition-transform hover:scale-105"
+              >
+                <motion.span
+                  ref={labelRef}
+                  style={{ x, y }}
+                  className="flex items-center"
+                >
+                  Next
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </motion.span>
+              </Button>
+            )}
+          </HoverArrowCursor>
+        )}
       </div>
     </div>
   );

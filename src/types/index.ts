@@ -7,6 +7,13 @@ export interface StepHeaderAction {
   onClick: () => void;
 }
 
+// Common props implemented by each onboarding wizard step component.
+export interface WizardStepProps {
+  hideHeader?: boolean;
+  onRegisterAction?: (action: StepHeaderAction | null) => void;
+  onCanProceedChange?: (ready: boolean) => void;
+}
+
 // Recipe Types
 export interface Recipe {
   id: string;
@@ -191,6 +198,29 @@ export const ALLERGY_OPTIONS = [
   "Soy",
   "Wheat",
   "Sesame",
+];
+
+export const FOOD_OPTIONS = [
+  "Chicken",
+  "Beef",
+  "Pork",
+  "Salmon",
+  "Shrimp",
+  "Tofu",
+  "Eggs",
+  "Mushrooms",
+  "Broccoli",
+  "Avocado",
+  "Sweet Potato",
+  "Chickpeas",
+  "Spicy Food",
+  "Cilantro",
+  "Olives",
+  "Blue Cheese",
+  "Eggplant",
+  "Kale",
+  "Pasta",
+  "Rice",
 ];
 
 export const COOKING_LEVEL_OPTIONS = [
