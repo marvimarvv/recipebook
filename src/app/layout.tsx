@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description:
     "A PWA that lets you enter your nutrition preferences and leverages AI to generate personalized recipes and meal plans",
   manifest: "/manifest.json",
-  themeColor: "#ff6b6b",
+  themeColor: "#f06f19",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

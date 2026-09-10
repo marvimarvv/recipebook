@@ -32,6 +32,7 @@ import AIRecipeGenerator from "@/components/AIRecipeGenerator";
 import OnboardingWizard from "@/components/OnboardingWizard";
 import Toast from "@/components/Toast";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import SplashScreen from "@/components/SplashScreen";
 import { useStore } from "@/store/useStore";
 
 const HeroScene = dynamic(() => import("@/components/HeroScene"), {
@@ -63,9 +64,7 @@ export default function Home() {
   }, []);
 
   if (!hasHydrated) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted/50" />
-    );
+    return <SplashScreen />;
   }
 
   if (!hasCompletedOnboarding) {

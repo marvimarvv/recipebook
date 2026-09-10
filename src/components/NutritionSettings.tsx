@@ -53,31 +53,27 @@ export default function NutritionSettings({
     macro: "proteinGoal" | "carbGoal" | "fatGoal",
     value: number[],
   ) => {
-    const newSettings = { ...nutritionSettings, [macro]: value[0] };
+    const others = (["proteinGoal", "carbGoal", "fatGoal"] as const).filter(
+      (key) => key !== macro,
+    );
+    const [otherA, otherB] = others;
 
-    // Ensure macros add up to 100%
-    let total =
-      newSettings.proteinGoal + newSettings.carbGoal + newSettings.fatGoal;
-    if (total > 100) {
-      // Adjust other macros proportionally
-      const excess = total - 100;
-      if (macro === "proteinGoal") {
-        newSettings.carbGoal = Math.max(0, newSettings.carbGoal - excess / 2);
-        newSettings.fatGoal = Math.max(0, newSettings.fatGoal - excess / 2);
-      } else if (macro === "carbGoal") {
-        newSettings.proteinGoal = Math.max(
-          0,
-          newSettings.proteinGoal - excess / 2,
-        );
-        newSettings.fatGoal = Math.max(0, newSettings.fatGoal - excess / 2);
-      } else {
-        newSettings.proteinGoal = Math.max(
-          0,
-          newSettings.proteinGoal - excess / 2,
-        );
-        newSettings.carbGoal = Math.max(0, newSettings.carbGoal - excess / 2);
-      }
-    }
+    const changedValue = Math.min(100, Math.max(0, value[0]));
+    const remaining = 100 - changedValue;
+    const othersTotal = nutritionSettings[otherA] + nutritionSettings[otherB];
+
+    // Split the remaining budget proportionally to the others' current ratio (even split if both are 0)
+    const ratioA =
+      othersTotal > 0 ? nutritionSettings[otherA] / othersTotal : 0.5;
+    const roundedA = Math.round(remaining * ratioA);
+
+    const newSettings = {
+      ...nutritionSettings,
+      [macro]: changedValue,
+      // Derive from the remainder rather than rounding independently so the total is always exactly 100
+      [otherA]: roundedA,
+      [otherB]: remaining - roundedA,
+    };
 
     setNutritionSettings(newSettings);
     setProteinInput(newSettings.proteinGoal);
@@ -176,15 +172,23 @@ export default function NutritionSettings({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Slider
-                value={[caloriesInput]}
-                onValueChange={handleCaloriesChange}
-                min={1000}
-                max={4000}
-                step={100}
-                className="w-full max-w-2xl"
-              />
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <Slider
+                  value={[caloriesInput]}
+                  onValueChange={handleCaloriesChange}
+                  min={1000}
+                  max={4000}
+                  step={100}
+                  className="w-full"
+                />
+              </div>
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>1000</span>
+                <span>2000</span>
+                <span>3000</span>
+                <span>4000</span>
+              </div>
             </div>
             <div className="flex items-center justify-between">
               <input
@@ -205,50 +209,47 @@ export default function NutritionSettings({
               />
               <span className="text-muted-foreground">calories/day</span>
             </div>
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <span>1000</span>
-              <span>2000</span>
-              <span>3000</span>
-              <span>4000</span>
-            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Macronutrient Distribution */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+      {/* Rows are subgridded so each card's title/description/slider/value/bar stay
+          aligned horizontally even when a description wraps onto multiple lines. */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3 md:grid-rows-[repeat(5,auto)]">
         {macroCards.map((macro) => (
-          <Card key={macro.key}>
-            <CardHeader>
+          <Card
+            key={macro.key}
+            className="md:row-span-5 md:grid md:grid-cols-1 md:grid-rows-subgrid"
+          >
+            <CardHeader className="md:row-span-2 md:grid md:grid-cols-1 md:grid-rows-subgrid">
               <div className="flex items-center gap-2">
                 {macro.icon}
                 <CardTitle>{macro.title}</CardTitle>
               </div>
               <CardDescription>{macro.description}</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Slider
-                    value={[macro.value]}
-                    onValueChange={macro.onChange}
-                    min={0}
-                    max={100}
-                    step={5}
-                    className="w-full"
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold">{macro.value}%</span>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-muted">
-                  <motion.div
-                    className={`h-full bg-gradient-to-r ${macro.color}`}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${macro.value}%` }}
-                    transition={{ duration: 0.5 }}
-                  />
-                </div>
+            <CardContent className="space-y-4 md:row-span-3 md:grid md:grid-cols-1 md:grid-rows-subgrid md:gap-4 md:space-y-0">
+              <div className="flex items-center justify-between">
+                <Slider
+                  value={[macro.value]}
+                  onValueChange={macro.onChange}
+                  min={0}
+                  max={100}
+                  step={5}
+                  className="w-full"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold">{macro.value}%</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full border border-input bg-muted">
+                <motion.div
+                  className={`h-full bg-gradient-to-r ${macro.color}`}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${macro.value}%` }}
+                  transition={{ duration: 0.5 }}
+                />
               </div>
             </CardContent>
           </Card>
@@ -286,7 +287,7 @@ export default function NutritionSettings({
               </div>
             </div>
 
-            <div className="h-4 overflow-hidden rounded-full bg-muted">
+            <div className="flex h-4 overflow-hidden rounded-full border border-input bg-muted">
               <div
                 className="h-full bg-gradient-to-r from-blue-500 to-cyan-500"
                 style={{ width: `${proteinInput}%` }}

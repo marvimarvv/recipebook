@@ -16,12 +16,18 @@ export interface SliderProps extends Omit<
 
 const Slider = React.forwardRef<HTMLInputElement, SliderProps>(
   (
-    { className, value, onValueChange, min = 0, max = 100, step = 1, ...props },
+    { className, value, onValueChange, min = 0, max = 100, step = 1, style, ...props },
     ref,
   ) => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       onValueChange([parseFloat(e.target.value)]);
     };
+
+    // Fill only the portion left of the thumb; keep the rest white so the track stays visible.
+    const percent = Math.min(
+      100,
+      Math.max(0, ((value[0] - min) / (max - min)) * 100),
+    );
 
     return (
       <input
@@ -33,9 +39,13 @@ const Slider = React.forwardRef<HTMLInputElement, SliderProps>(
         max={max}
         step={step}
         className={cn(
-          "h-2 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-primary",
+          "h-2 w-full cursor-pointer appearance-none rounded-full border border-input bg-background accent-primary",
           className,
         )}
+        style={{
+          background: `linear-gradient(to right, hsl(var(--secondary)) ${percent}%, hsl(var(--background)) ${percent}%)`,
+          ...style,
+        }}
         {...props}
       />
     );
