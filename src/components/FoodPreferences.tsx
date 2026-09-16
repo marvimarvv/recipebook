@@ -31,11 +31,13 @@ import {
 
 interface FoodPreferencesProps {
   hideHeader?: boolean;
+  compact?: boolean;
   onRegisterAction?: (action: StepHeaderAction | null) => void;
 }
 
 export default function FoodPreferences({
   hideHeader,
+  compact = false,
   onRegisterAction,
 }: FoodPreferencesProps = {}) {
   const preferences = useStore((state) => state.preferences);
@@ -130,15 +132,18 @@ export default function FoodPreferences({
   const renderCategoryCard = (
     category: (typeof preferenceCategories)[number],
   ) => (
-    <Card key={category.key} className="transition-shadow hover:shadow-md">
-      <CardHeader>
+    <Card
+      key={category.key}
+      className={compact ? "shadow-none" : "transition-shadow hover:shadow-md"}
+    >
+      <CardHeader className={compact ? "p-4 pb-2" : undefined}>
         <div className="flex items-center gap-2">
           {category.icon}
           <CardTitle className="text-lg">{category.title}</CardTitle>
         </div>
         <CardDescription>{category.description}</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className={compact ? "p-4 pt-2" : undefined}>
         {/* Existing preferences */}
         <div className="mb-4 flex flex-wrap gap-2">
           {preferences[category.key as StringArrayKey].map((item) => (
@@ -268,7 +273,7 @@ export default function FoodPreferences({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mt-8 flex flex-col gap-6"
+      className={compact ? "flex flex-col gap-5" : "mt-8 flex flex-col gap-6"}
     >
       {!hideHeader && (
         <div className="flex items-center justify-between">
@@ -285,31 +290,44 @@ export default function FoodPreferences({
       )}
 
       {/* What you like */}
-      <div className="space-y-4">
-        <h3 className="flex items-center gap-2 text-xl">
+      <div className={compact ? "flex flex-col gap-3" : "space-y-4"}>
+        <h3 className="flex items-center gap-2 text-lg">
           <Heart className="h-5 w-5 text-primary" />
           What you like
         </h3>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div
+          className={
+            compact
+              ? "grid grid-cols-1 gap-3 md:grid-cols-2"
+              : "grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
+          }
+        >
           {likeCategories.map((category) => renderCategoryCard(category))}
         </div>
       </div>
 
       {/* What you don't like */}
-      <div className="space-y-4">
-        <h3 className="flex items-center gap-2 text-xl">
+      <div className={compact ? "flex flex-col gap-3" : "space-y-4"}>
+        <h3 className="flex items-center gap-2 text-lg">
           <HeartOff className="h-5 w-5 text-destructive" />
           What you don&apos;t like
         </h3>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div
+          className={
+            compact
+              ? "grid grid-cols-1 gap-3 md:grid-cols-2"
+              : "grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
+          }
+        >
           {dislikeCategories.map((category) => renderCategoryCard(category))}
         </div>
       </div>
 
       {/* Summary */}
-      {preferences.cuisines.length > 0 ||
-      preferences.diets.length > 0 ||
-      preferences.allergies.length > 0 ? (
+      {!compact &&
+      (preferences.cuisines.length > 0 ||
+        preferences.diets.length > 0 ||
+        preferences.allergies.length > 0) ? (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

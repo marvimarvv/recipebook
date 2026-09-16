@@ -204,10 +204,13 @@ export default function KnownRecipes({
     },
   ];
 
-  // Add sample recipes if none exist
-  if (recipes.length === 0) {
-    sampleRecipes.forEach((recipe) => addRecipe(recipe));
-  }
+  useEffect(() => {
+    if (recipes.length === 0) {
+      sampleRecipes.forEach((recipe) => addRecipe(recipe));
+    }
+    // Sample data is seeded once when the persisted recipe collection is empty.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recipes.length, addRecipe]);
 
   return (
     <motion.div

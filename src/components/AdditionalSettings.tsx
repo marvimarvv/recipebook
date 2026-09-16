@@ -14,11 +14,13 @@ import { StepHeaderAction } from "@/types";
 
 interface AdditionalSettingsProps {
   hideHeader?: boolean;
+  compact?: boolean;
   onRegisterAction?: (action: StepHeaderAction | null) => void;
 }
 
 export default function AdditionalSettings({
   hideHeader,
+  compact = false,
 }: AdditionalSettingsProps = {}) {
   const preferences = useStore((state) => state.preferences);
   const setPreferences = useStore((state) => state.setPreferences);
@@ -63,7 +65,7 @@ export default function AdditionalSettings({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
+      className={compact ? "flex flex-col gap-4" : "space-y-6"}
     >
       {!hideHeader && (
         <div>
@@ -74,14 +76,20 @@ export default function AdditionalSettings({
         </div>
       )}
 
-      <Card>
-        <CardHeader>
+      <Card className={compact ? "shadow-none" : undefined}>
+        <CardHeader className={compact ? "p-4 pb-2" : undefined}>
           <CardTitle>Additional Settings</CardTitle>
           <CardDescription>
             Fine-tune your recipe recommendations
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <CardContent
+          className={
+            compact
+              ? "grid grid-cols-1 gap-4 p-4 pt-2 md:grid-cols-2"
+              : "grid grid-cols-1 gap-6 md:grid-cols-2"
+          }
+        >
           <div>
             <h3 className="mb-2 font-medium">Cooking Level</h3>
             <div className="flex gap-2">
@@ -124,14 +132,14 @@ export default function AdditionalSettings({
       </Card>
 
       {/* Meal Plan Settings */}
-      <Card>
-        <CardHeader>
+      <Card className={compact ? "shadow-none" : undefined}>
+        <CardHeader className={compact ? "p-4 pb-2" : undefined}>
           <CardTitle>Meal Plan Settings</CardTitle>
           <CardDescription>
             Configure which meals to include in your daily plan
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className={compact ? "p-4 pt-2" : undefined}>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {["breakfast", "lunch", "dinner", "snacks"].map((mealType) => (
               <Button
@@ -201,26 +209,28 @@ export default function AdditionalSettings({
       </Card>
 
       {/* Calorie Calculation Info */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center text-sm text-muted-foreground"
-      >
-        <p>
-          Based on your settings, each meal should contain approximately:{" "}
-          <span className="font-medium text-foreground">
-            {Math.round(
-              nutritionSettings.dailyCalories /
-                (Object.values(nutritionSettings.mealPlan).filter(Boolean)
-                  .length +
-                  (nutritionSettings.mealPlan.snacks
-                    ? nutritionSettings.mealPlan.snackCount
-                    : 0)),
-            )}{" "}
-            calories
-          </span>
-        </p>
-      </motion.div>
+      {!compact && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center text-sm text-muted-foreground"
+        >
+          <p>
+            Based on your settings, each meal should contain approximately:{" "}
+            <span className="font-medium text-foreground">
+              {Math.round(
+                nutritionSettings.dailyCalories /
+                  (Object.values(nutritionSettings.mealPlan).filter(Boolean)
+                    .length +
+                    (nutritionSettings.mealPlan.snacks
+                      ? nutritionSettings.mealPlan.snackCount
+                      : 0)),
+              )}{" "}
+              calories
+            </span>
+          </p>
+        </motion.div>
+      )}
     </motion.div>
   );
 }

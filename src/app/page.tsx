@@ -3,14 +3,7 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
-import {
-  ChefHat,
-  Heart,
-  RotateCcw,
-  Settings,
-  Sparkles,
-  Utensils,
-} from "lucide-react";
+import { Heart, RotateCcw, Sparkles, Utensils } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
@@ -24,10 +17,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import FoodPreferences from "@/components/FoodPreferences";
 import KnownRecipes from "@/components/KnownRecipes";
-import NutritionSettings from "@/components/NutritionSettings";
-import AdditionalSettings from "@/components/AdditionalSettings";
 import AIRecipeGenerator from "@/components/AIRecipeGenerator";
 import OnboardingWizard from "@/components/OnboardingWizard";
 import Toast from "@/components/Toast";
@@ -40,7 +30,7 @@ const HeroScene = dynamic(() => import("@/components/HeroScene"), {
 });
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState("preferences");
+  const [activeTab, setActiveTab] = useState("generate");
   const [hasHydrated, setHasHydrated] = useState(false);
   const hasCompletedOnboarding = useStore(
     (state) => state.hasCompletedOnboarding,
@@ -93,32 +83,18 @@ export default function Home() {
             <nav className="flex flex-1 items-center">
               <TabsList className="flex w-full bg-transparent p-0">
                 <TabsTrigger
-                  value="preferences"
+                  value="generate"
                   className="flex flex-1 items-center justify-center gap-2"
                 >
-                  <ChefHat className="h-4 w-4" />
-                  <span className="hidden sm:inline">Preferences</span>
+                  <Sparkles className="h-4 w-4" />
+                  <span>My Meal Plan</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="recipes"
                   className="flex flex-1 items-center justify-center gap-2"
                 >
                   <Heart className="h-4 w-4" />
-                  <span className="hidden sm:inline">Recipes</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="nutrition"
-                  className="flex flex-1 items-center justify-center gap-2"
-                >
-                  <Settings className="h-4 w-4" />
-                  <span className="hidden sm:inline">Nutrition</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="generate"
-                  className="flex flex-1 items-center justify-center gap-2"
-                >
-                  <Sparkles className="h-4 w-4" />
-                  <span className="hidden sm:inline">Generate</span>
+                  <span>My Recipes</span>
                 </TabsTrigger>
               </TabsList>
             </nav>
@@ -154,24 +130,6 @@ export default function Home() {
         </div>
 
         <main className="container py-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="mb-12"
-          >
-            <div className="mt-2 text-center">
-              <h1 className="mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-4xl font-bold text-transparent md:text-5xl">
-                Your Personal AI Meal Planner
-              </h1>
-              <p className="mx-auto max-w-2xl text-xl text-muted-foreground">
-                Enter your preferences, save your favorite recipes, and let AI
-                generate personalized meal plans tailored to your nutrition
-                goals.
-              </p>
-            </div>
-          </motion.div>
-
           {/* Main Content Tabs */}
           <motion.div
             key={activeTab}
@@ -180,20 +138,11 @@ export default function Home() {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3 }}
           >
-            <TabsContent value="preferences">
-              <div className="space-y-6">
-                <FoodPreferences />
-                <AdditionalSettings />
-              </div>
+            <TabsContent value="generate">
+              <AIRecipeGenerator />
             </TabsContent>
             <TabsContent value="recipes">
               <KnownRecipes />
-            </TabsContent>
-            <TabsContent value="nutrition">
-              <NutritionSettings />
-            </TabsContent>
-            <TabsContent value="generate">
-              <AIRecipeGenerator />
             </TabsContent>
           </motion.div>
         </main>

@@ -25,13 +25,10 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Empty,
   EmptyHeader,
@@ -47,14 +44,11 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useStore } from "@/store/useStore";
-import {
-  GeneratedRecipe,
-  MealPlan,
-  COOKING_TIME_OPTIONS,
-  DIFFICULTY_OPTIONS,
-} from "@/types";
-import { checkMistralAPI } from "@/lib/mistral";
+import { GeneratedRecipe, MealPlan } from "@/types";
+import { checkMistralAPI, GenerationOptions } from "@/lib/mistral";
 import { useMealPlanGeneration } from "@/hooks/useMealPlanGeneration";
+import GenerationOptionsDialog from "@/components/GenerationOptionsDialog";
+import MealPlanSettingsDialog from "@/components/MealPlanSettingsDialog";
 
 const mealTypeIcons: Record<string, React.ReactNode> = {
   breakfast: <Sun className="h-5 w-5" />,
@@ -147,12 +141,14 @@ export default function AIRecipeGenerator() {
   const { generation, isSnapshotStale, generateWeek, saveWeekMealPlan } =
     useMealPlanGeneration();
 
-  const [generationOptions, setGenerationOptions] = useState({
-    cookingTime: "medium" as (typeof COOKING_TIME_OPTIONS)[number],
-    difficulty: "medium" as (typeof DIFFICULTY_OPTIONS)[number],
-    includeAllPreferences: true,
-    randomize: false,
-  });
+  const [generationOptions, setGenerationOptions] = useState<GenerationOptions>(
+    {
+      cookingTime: "medium",
+      difficulty: "medium",
+      includeAllPreferences: true,
+      randomize: false,
+    },
+  );
   const [useMistralAPI, setUseMistralAPI] = useState(true);
   const [apiAvailable, setApiAvailable] = useState<boolean | null>(null);
 
@@ -163,6 +159,20 @@ export default function AIRecipeGenerator() {
     preferences.cuisines.length === 0 &&
     preferences.diets.length === 0 &&
     preferences.likes.length === 0;
+  const preferenceGroups = [
+    { label: "Cuisines", values: preferences.cuisines },
+    { label: "Diets", values: preferences.diets },
+    { label: "Allergies", values: preferences.allergies },
+    { label: "Favorites", values: preferences.likes },
+    { label: "Avoid", values: preferences.dislikes },
+  ].filter((group) => group.values.length > 0);
+  const enabledMeals = [
+    nutritionSettings.mealPlan.breakfast && "Breakfast",
+    nutritionSettings.mealPlan.lunch && "Lunch",
+    nutritionSettings.mealPlan.dinner && "Dinner",
+    nutritionSettings.mealPlan.snacks &&
+      `${nutritionSettings.mealPlan.snackCount} ${nutritionSettings.mealPlan.snackCount === 1 ? "snack" : "snacks"}`,
+  ].filter((meal): meal is string => Boolean(meal));
 
   // Check Mistral API availability on component mount
   useEffect(() => {
@@ -194,159 +204,21 @@ export default function AIRecipeGenerator() {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold">AI Recipe Generator</h2>
           <p className="text-muted-foreground">
             Generate personalized meal plans based on your preferences
           </p>
         </div>
-      </div>
-
-      {/* API Status */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Mistral AI Integration</CardTitle>
-          <CardDescription>
-            Your Mistral API key is configured and ready to use
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {apiAvailable === true && (
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 animate-pulse rounded-full bg-green-500" />
-                  <span className="text-sm font-medium">
-                    Mistral AI: Connected
-                  </span>
-                </div>
-              )}
-              {apiAvailable === false && (
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-red-500" />
-                  <span className="text-sm font-medium">
-                    Mistral AI: Connection failed
-                  </span>
-                </div>
-              )}
-              {apiAvailable === null && (
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 animate-pulse rounded-full bg-yellow-500" />
-                  <span className="text-sm font-medium">
-                    Checking Mistral AI connection...
-                  </span>
-                </div>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Use AI</span>
-              <Switch
-                checked={useMistralAPI}
-                onCheckedChange={setUseMistralAPI}
-                disabled={apiAvailable === false}
-              />
-            </div>
-          </div>
-          {apiAvailable === false && (
-            <Alert variant="destructive" className="mt-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Mistral API connection failed. Using mock data for
-                demonstration.
-              </AlertDescription>
-            </Alert>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Generation Options */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Generation Options</CardTitle>
-          <CardDescription>
-            Customize how AI generates your meal plan
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div className="space-y-4">
-            <div>
-              <label className="mb-2 block text-sm font-medium">
-                Cooking Time
-              </label>
-              <ToggleGroup
-                type="single"
-                variant="outline"
-                value={generationOptions.cookingTime}
-                onValueChange={(value) => {
-                  if (!value) return;
-                  setGenerationOptions({
-                    ...generationOptions,
-                    cookingTime: value as (typeof COOKING_TIME_OPTIONS)[number],
-                  });
-                }}
-              >
-                {COOKING_TIME_OPTIONS.map((option) => (
-                  <ToggleGroupItem key={option} value={option}>
-                    {option.charAt(0).toUpperCase() + option.slice(1)}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium">
-                Difficulty
-              </label>
-              <ToggleGroup
-                type="single"
-                variant="outline"
-                value={generationOptions.difficulty}
-                onValueChange={(value) => {
-                  if (!value) return;
-                  setGenerationOptions({
-                    ...generationOptions,
-                    difficulty: value as (typeof DIFFICULTY_OPTIONS)[number],
-                  });
-                }}
-              >
-                {DIFFICULTY_OPTIONS.map((option) => (
-                  <ToggleGroupItem key={option} value={option}>
-                    {option.charAt(0).toUpperCase() + option.slice(1)}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-            </div>
-          </div>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">
-                Include All Preferences
-              </label>
-              <Switch
-                checked={generationOptions.includeAllPreferences}
-                onCheckedChange={(checked) =>
-                  setGenerationOptions({
-                    ...generationOptions,
-                    includeAllPreferences: checked,
-                  })
-                }
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Randomize Selection</label>
-              <Switch
-                checked={generationOptions.randomize}
-                onCheckedChange={(checked) =>
-                  setGenerationOptions({
-                    ...generationOptions,
-                    randomize: checked,
-                  })
-                }
-              />
-            </div>
-          </div>
-        </CardContent>
-        <CardFooter className="flex justify-end">
+        <div className="flex flex-wrap items-center gap-2">
+          <GenerationOptionsDialog
+            options={generationOptions}
+            onOptionsChange={setGenerationOptions}
+            useMistralAPI={useMistralAPI}
+            onUseMistralAPIChange={setUseMistralAPI}
+            apiAvailable={apiAvailable}
+          />
           <Button
             onClick={handleGenerateMealPlan}
             disabled={isGenerating}
@@ -369,7 +241,88 @@ export default function AIRecipeGenerator() {
               </>
             )}
           </Button>
-        </CardFooter>
+        </div>
+      </div>
+
+      {/* Current settings summary */}
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <CardTitle>Your meal plan settings</CardTitle>
+              <CardDescription>
+                {weekMealPlan
+                  ? isStale
+                    ? "Your current settings differ from this generated plan"
+                    : "These settings were used for your current plan"
+                  : "These settings will shape your generated plan"}
+              </CardDescription>
+            </div>
+            <MealPlanSettingsDialog />
+          </div>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="flex flex-col gap-3 md:col-span-2">
+            <h4 className="text-sm font-medium text-muted-foreground">
+              Food preferences
+            </h4>
+            {preferenceGroups.length > 0 ? (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {preferenceGroups.map((group) => (
+                  <div key={group.label} className="flex flex-col gap-1.5">
+                    <span className="text-sm font-medium">{group.label}</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {group.values.map((value) => (
+                        <Badge
+                          key={`${group.label}-${value}`}
+                          variant={
+                            group.label === "Allergies" ||
+                            group.label === "Avoid"
+                              ? "destructive"
+                              : "secondary"
+                          }
+                        >
+                          {value}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No food preferences selected
+              </p>
+            )}
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-1">
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-medium text-muted-foreground">
+                Meal preferences
+              </span>
+              <span className="text-sm capitalize">
+                {preferences.cookingLevel} cook · {preferences.mealFrequency}{" "}
+                meals per day
+              </span>
+              <span className="text-sm">
+                {enabledMeals.join(", ") || "No meals enabled"}
+              </span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-medium text-muted-foreground">
+                Nutrition
+              </span>
+              <span className="text-sm">
+                {nutritionSettings.dailyCalories} kcal per day
+              </span>
+              <span className="text-sm">
+                {nutritionSettings.proteinGoal}% protein ·{" "}
+                {nutritionSettings.carbGoal}% carbs ·{" "}
+                {nutritionSettings.fatGoal}% fat
+              </span>
+            </div>
+          </div>
+        </CardContent>
       </Card>
 
       {/* Stale plan / empty preferences nudges */}
@@ -390,91 +343,10 @@ export default function AIRecipeGenerator() {
           <AlertTitle>No preferences set yet</AlertTitle>
           <AlertDescription>
             You haven&apos;t added any cuisines, diets, or liked foods, so the
-            plan will be generic. Visit the Preferences tab to personalize it.
+            plan will be generic. Use Edit settings to personalize it.
           </AlertDescription>
         </Alert>
       )}
-
-      {/* Preferences Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Preferences Summary</CardTitle>
-          <CardDescription>
-            {weekMealPlan
-              ? isStale
-                ? "These are your current settings - they differ from the ones used for the plan below"
-                : "This week's plan was generated using these settings"
-              : "AI will use these preferences to generate your meal plan"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <h4 className="mb-2 font-medium">Cuisines</h4>
-              {preferences.cuisines.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {preferences.cuisines.map((cuisine) => (
-                    <Badge key={cuisine} variant="secondary">
-                      {cuisine}
-                    </Badge>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No cuisines selected
-                </p>
-              )}
-            </div>
-            <div>
-              <h4 className="mb-2 font-medium">Diets</h4>
-              {preferences.diets.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {preferences.diets.map((diet) => (
-                    <Badge key={diet} variant="secondary">
-                      {diet}
-                    </Badge>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No diets selected
-                </p>
-              )}
-            </div>
-            <div>
-              <h4 className="mb-2 font-medium">Allergies</h4>
-              {preferences.allergies.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {preferences.allergies.map((allergy) => (
-                    <Badge key={allergy} variant="destructive">
-                      {allergy}
-                    </Badge>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No allergies specified
-                </p>
-              )}
-            </div>
-            <div>
-              <h4 className="mb-2 font-medium">Nutrition Goals</h4>
-              <div className="space-y-1">
-                <p className="text-sm">
-                  <span className="font-medium">Calories:</span>{" "}
-                  {nutritionSettings.dailyCalories} kcal/day
-                </p>
-                <p className="text-sm">
-                  <span className="font-medium">Macros:</span> P:{" "}
-                  {nutritionSettings.proteinGoal}% | C:{" "}
-                  {nutritionSettings.carbGoal}% | F: {nutritionSettings.fatGoal}
-                  %
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Generation Progress */}
       <AnimatePresence>

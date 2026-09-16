@@ -58,7 +58,6 @@ const nextConfig = withPWA({
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
   experimental: {
-    appDir: true,
     // iOS specific: Enable server components for PWA
     serverComponentsExternalPackages: ["next-pwa"],
   },

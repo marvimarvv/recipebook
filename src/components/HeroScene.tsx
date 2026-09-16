@@ -625,7 +625,7 @@ function Scene() {
 
 export default function HeroScene() {
   return (
-    <div className="pointer-events-none relative h-[340px] w-full md:h-[560px]">
+    <div className="pointer-events-none relative h-[340px] max-h-[30vh] w-full">
       <Canvas
         dpr={[1, 2]}
         camera={{ position: [0, 1.4, 6.5], fov: 45 }}

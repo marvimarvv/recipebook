@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -9,18 +9,10 @@ export const metadata: Metadata = {
   description:
     "A PWA that lets you enter your nutrition preferences and leverages AI to generate personalized recipes and meal plans",
   manifest: "/manifest.json",
-  themeColor: "#f06f19",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "RecipeBook",
-  },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-    viewportFit: "cover",
   },
   icons: {
     apple: [
@@ -41,6 +33,15 @@ export const metadata: Metadata = {
     "apple-mobile-web-app-status-bar-style": "default",
     "mobile-web-app-capable": "yes",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  themeColor: "#f06f19",
 };
 
 export default function RootLayout({

@@ -25,11 +25,13 @@ import { StepHeaderAction } from "@/types";
 
 interface NutritionSettingsProps {
   hideHeader?: boolean;
+  compact?: boolean;
   onRegisterAction?: (action: StepHeaderAction | null) => void;
 }
 
 export default function NutritionSettings({
   hideHeader,
+  compact = false,
   onRegisterAction,
 }: NutritionSettingsProps = {}) {
   const nutritionSettings = useStore((state) => state.nutritionSettings);
@@ -142,7 +144,7 @@ export default function NutritionSettings({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
+      className={compact ? "flex flex-col gap-4" : "space-y-6"}
     >
       {!hideHeader && (
         <div className="flex items-center justify-between">
@@ -160,8 +162,8 @@ export default function NutritionSettings({
       )}
 
       {/* Daily Calories Card */}
-      <Card>
-        <CardHeader>
+      <Card className={compact ? "shadow-none" : undefined}>
+        <CardHeader className={compact ? "p-4 pb-2" : undefined}>
           <div className="flex items-center gap-2">
             <Flame className="h-6 w-6 text-primary" />
             <CardTitle>Daily Calories</CardTitle>
@@ -170,7 +172,7 @@ export default function NutritionSettings({
             Set your target daily calorie intake
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className={compact ? "p-4 pt-2" : undefined}>
           <div className="space-y-4">
             <div className="space-y-1">
               <div className="flex items-center justify-between">
@@ -216,20 +218,26 @@ export default function NutritionSettings({
       {/* Macronutrient Distribution */}
       {/* Rows are subgridded so each card's title/description/slider/value/bar stay
           aligned horizontally even when a description wraps onto multiple lines. */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3 md:grid-rows-[repeat(5,auto)]">
+      <div
+        className={`${compact ? "gap-3" : "gap-6"} grid grid-cols-1 md:grid-cols-3 md:grid-rows-[repeat(5,auto)]`}
+      >
         {macroCards.map((macro) => (
           <Card
             key={macro.key}
-            className="md:row-span-5 md:grid md:grid-cols-1 md:grid-rows-subgrid"
+            className={`${compact ? "shadow-none" : ""} md:row-span-5 md:grid md:grid-cols-1 md:grid-rows-subgrid`}
           >
-            <CardHeader className="md:row-span-2 md:grid md:grid-cols-1 md:grid-rows-subgrid">
+            <CardHeader
+              className={`${compact ? "p-4 pb-2" : ""} md:row-span-2 md:grid md:grid-cols-1 md:grid-rows-subgrid`}
+            >
               <div className="flex items-center gap-2">
                 {macro.icon}
                 <CardTitle>{macro.title}</CardTitle>
               </div>
               <CardDescription>{macro.description}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4 md:row-span-3 md:grid md:grid-cols-1 md:grid-rows-subgrid md:gap-4 md:space-y-0">
+            <CardContent
+              className={`${compact ? "p-4 pt-2" : ""} space-y-4 md:row-span-3 md:grid md:grid-cols-1 md:grid-rows-subgrid md:gap-4 md:space-y-0`}
+            >
               <div className="flex items-center justify-between">
                 <Slider
                   value={[macro.value]}
@@ -257,14 +265,14 @@ export default function NutritionSettings({
       </div>
 
       {/* Macro Summary */}
-      <Card>
-        <CardHeader>
+      <Card className={compact ? "shadow-none" : undefined}>
+        <CardHeader className={compact ? "p-4 pb-2" : undefined}>
           <CardTitle>Macronutrient Summary</CardTitle>
           <CardDescription>
             Your current macronutrient distribution
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className={compact ? "p-4 pt-2" : undefined}>
           <div className="space-y-4">
             <div className="flex justify-between text-sm">
               <div className="text-center">

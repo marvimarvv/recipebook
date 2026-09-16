@@ -3,8 +3,8 @@
 import { UserPreferences, NutritionSettings } from "@/types";
 
 export interface GenerationOptions {
-  cookingTime: string;
-  difficulty: string;
+  cookingTime: "quick" | "medium" | "long";
+  difficulty: "easy" | "medium" | "hard";
   includeAllPreferences: boolean;
   randomize: boolean;
 }
