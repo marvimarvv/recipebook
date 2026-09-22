@@ -30,14 +30,6 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
-  Empty,
-  EmptyHeader,
-  EmptyTitle,
-  EmptyDescription,
-  EmptyContent,
-  EmptyMedia,
-} from "@/components/ui/empty";
-import {
   Accordion,
   AccordionContent,
   AccordionItem,
@@ -262,12 +254,12 @@ export default function AIRecipeGenerator() {
           </div>
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          <div className="flex flex-col gap-3 md:col-span-2">
+          <div className="flex flex-col gap-3">
             <h4 className="text-sm font-medium text-muted-foreground">
               Food preferences
             </h4>
             {preferenceGroups.length > 0 ? (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3">
                 {preferenceGroups.map((group) => (
                   <div key={group.label} className="flex flex-col gap-1.5">
                     <span className="text-sm font-medium">{group.label}</span>
@@ -295,32 +287,30 @@ export default function AIRecipeGenerator() {
               </p>
             )}
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-1">
-            <div className="flex flex-col gap-1">
-              <span className="text-sm font-medium text-muted-foreground">
-                Meal preferences
-              </span>
-              <span className="text-sm capitalize">
-                {preferences.cookingLevel} cook · {preferences.mealFrequency}{" "}
-                meals per day
-              </span>
-              <span className="text-sm">
-                {enabledMeals.join(", ") || "No meals enabled"}
-              </span>
-            </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-sm font-medium text-muted-foreground">
-                Nutrition
-              </span>
-              <span className="text-sm">
-                {nutritionSettings.dailyCalories} kcal per day
-              </span>
-              <span className="text-sm">
-                {nutritionSettings.proteinGoal}% protein ·{" "}
-                {nutritionSettings.carbGoal}% carbs ·{" "}
-                {nutritionSettings.fatGoal}% fat
-              </span>
-            </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-sm font-medium text-muted-foreground">
+              Meal preferences
+            </span>
+            <span className="text-sm capitalize">
+              {preferences.cookingLevel} cook · {preferences.mealFrequency}{" "}
+              meals per day
+            </span>
+            <span className="text-sm">
+              {enabledMeals.join(", ") || "No meals enabled"}
+            </span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-sm font-medium text-muted-foreground">
+              Nutrition
+            </span>
+            <span className="text-sm">
+              {nutritionSettings.dailyCalories} kcal per day
+            </span>
+            <span className="text-sm">
+              {nutritionSettings.proteinGoal}% protein ·{" "}
+              {nutritionSettings.carbGoal}% carbs · {nutritionSettings.fatGoal}%
+              fat
+            </span>
           </div>
         </CardContent>
       </Card>
@@ -474,48 +464,6 @@ export default function AIRecipeGenerator() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Empty State */}
-      {!isGenerating && !weekMealPlan && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <Empty>
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <Sparkles className="h-6 w-6" />
-              </EmptyMedia>
-              <EmptyTitle>Ready to Generate?</EmptyTitle>
-              <EmptyDescription>
-                Click the button above to let AI create a personalized week of
-                meal plans based on your preferences and nutrition goals!
-              </EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent>
-              <div className="flex justify-center gap-4">
-                <Button
-                  variant="outline"
-                  onClick={() =>
-                    setGenerationOptions({
-                      cookingTime: "quick",
-                      difficulty: "easy",
-                      includeAllPreferences: true,
-                      randomize: false,
-                    })
-                  }
-                >
-                  Quick Setup
-                </Button>
-                <Button onClick={handleGenerateMealPlan}>
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Generate Now
-                </Button>
-              </div>
-            </EmptyContent>
-          </Empty>
-        </motion.div>
-      )}
     </motion.div>
   );
 }

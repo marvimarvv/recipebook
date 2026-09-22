@@ -55,32 +55,13 @@ export default function NutritionSettings({
     macro: "proteinGoal" | "carbGoal" | "fatGoal",
     value: number[],
   ) => {
-    const others = (["proteinGoal", "carbGoal", "fatGoal"] as const).filter(
-      (key) => key !== macro,
-    );
-    const [otherA, otherB] = others;
-
+    // Sliders are independent - changing one no longer redistributes the others.
     const changedValue = Math.min(100, Math.max(0, value[0]));
-    const remaining = 100 - changedValue;
-    const othersTotal = nutritionSettings[otherA] + nutritionSettings[otherB];
+    setNutritionSettings({ ...nutritionSettings, [macro]: changedValue });
 
-    // Split the remaining budget proportionally to the others' current ratio (even split if both are 0)
-    const ratioA =
-      othersTotal > 0 ? nutritionSettings[otherA] / othersTotal : 0.5;
-    const roundedA = Math.round(remaining * ratioA);
-
-    const newSettings = {
-      ...nutritionSettings,
-      [macro]: changedValue,
-      // Derive from the remainder rather than rounding independently so the total is always exactly 100
-      [otherA]: roundedA,
-      [otherB]: remaining - roundedA,
-    };
-
-    setNutritionSettings(newSettings);
-    setProteinInput(newSettings.proteinGoal);
-    setCarbsInput(newSettings.carbGoal);
-    setFatInput(newSettings.fatGoal);
+    if (macro === "proteinGoal") setProteinInput(changedValue);
+    else if (macro === "carbGoal") setCarbsInput(changedValue);
+    else setFatInput(changedValue);
   };
 
   const handleReset = () => {
@@ -316,8 +297,11 @@ export default function NutritionSettings({
                 animate={{ opacity: 1, y: 0 }}
                 className="text-center text-sm text-amber-600 dark:text-amber-400"
               >
-                Macros should add up to 100% (
-                {proteinInput + carbsInput + fatInput}%)
+                Macros must add up to 100% - currently{" "}
+                {proteinInput + carbsInput + fatInput}%
+                {proteinInput + carbsInput + fatInput > 100
+                  ? " (too high)"
+                  : " (too low)"}
               </motion.div>
             )}
           </div>

@@ -11,6 +11,15 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { HoverArrowCursor } from "@/components/ui/hover-arrow-cursor";
 import { Progress } from "@/components/ui/progress";
 import PreferenceCategoryCards, {
@@ -59,8 +68,10 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
   );
   const [preferenceProgress, setPreferenceProgress] =
     useState<PreferenceCardsProgress>(createEmptyPreferenceCardsProgress);
+  const [showMacroWarning, setShowMacroWarning] = useState(false);
   const completeOnboarding = useStore((state) => state.completeOnboarding);
   const startGeneration = useStore((state) => state.startGeneration);
+  const nutritionSettings = useStore((state) => state.nutritionSettings);
   const { generateWeek } = useMealPlanGeneration();
 
   const registerHeaderAction = useCallback(
@@ -71,6 +82,10 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
   const isLastStep = step === STEPS.length - 1;
   const isFirstStep = step === 0;
   const current = STEPS[step];
+  const macroTotal =
+    nutritionSettings.proteinGoal +
+    nutritionSettings.carbGoal +
+    nutritionSettings.fatGoal;
 
   const handleSkip = () => {
     completeOnboarding();
@@ -80,6 +95,11 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
   const handleBack = () => setStep((s) => Math.max(0, s - 1));
 
   const handleNext = async () => {
+    if (current.key === "nutrition" && macroTotal !== 100) {
+      setShowMacroWarning(true);
+      return;
+    }
+
     if (!isLastStep) {
       setStep((s) => Math.min(STEPS.length - 1, s + 1));
       return;
@@ -218,6 +238,24 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
           </HoverArrowCursor>
         )}
       </div>
+
+      <AlertDialog open={showMacroWarning} onOpenChange={setShowMacroWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Macros don&apos;t add up to 100%</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your protein, carb, and fat goals currently total {macroTotal}%.
+              Adjust the sliders so they add up to exactly 100% before
+              continuing.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowMacroWarning(false)}>
+              Got it
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
