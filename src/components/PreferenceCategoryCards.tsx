@@ -358,7 +358,7 @@ function BadgeGroup({
                 role="button"
                 tabIndex={0}
                 variant={isSelected ? "default" : "outline"}
-                className="cursor-pointer select-none px-3 py-1"
+                className="cursor-pointer px-3 py-1 select-none"
                 onClick={() => handleToggle(option)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
@@ -401,7 +401,7 @@ const BURST_PARTICLES = [
 
 function EmojiBurst({ emoji, onDone }: { emoji: string; onDone: () => void }) {
   return (
-    <span className="pointer-events-none absolute left-1/2 top-0 z-10 h-0 w-0">
+    <span className="pointer-events-none absolute top-0 left-1/2 z-10 h-0 w-0">
       {BURST_PARTICLES.map((particle, index) => (
         <motion.span
           key={index}
