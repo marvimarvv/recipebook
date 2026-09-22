@@ -439,7 +439,7 @@ function ActiveDeckCards({
 }: {
   deck: DeckConfig;
   remaining: string[];
-  stackHandleRef: RefObject<SwipeCardStackHandle>;
+  stackHandleRef: RefObject<SwipeCardStackHandle | null>;
   canUndo: boolean;
   onDecide: (deck: DeckConfig, item: string, direction: SwipeDirection) => void;
   onUndo: () => void;

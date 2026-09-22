@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo, ReactNode } from "react";
+import { useRef, useMemo, ReactNode, JSX } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Float } from "@react-three/drei";
 import * as THREE from "three";

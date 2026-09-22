@@ -31,6 +31,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Serwist
+public/sw*
+public/swe-worker*
+
 # IDE
 .idea/
 .vscode/
