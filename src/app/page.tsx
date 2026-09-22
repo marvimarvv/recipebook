@@ -59,7 +59,7 @@ export default function Home() {
 
   if (!hasCompletedOnboarding) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted/50">
+      <div className="min-h-screen bg-linear-to-br from-background to-muted/50">
         <main className="container py-12">
           <OnboardingWizard onFinish={() => setActiveTab("generate")} />
         </main>
@@ -69,13 +69,13 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/50">
+    <div className="min-h-screen bg-linear-to-br from-background to-muted/50">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         {/* Header */}
-        <header className="sticky top-5 z-50 mx-auto w-[clamp(300px,90vw,1200px)] border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <header className="sticky top-5 z-50 mx-auto w-[clamp(300px,90vw,1200px)] border bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
           <div className="container flex h-16 items-center gap-6">
             <div className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary">
                 <Utensils className="h-5 w-5 text-primary-foreground" />
               </div>
               <span className="text-xl font-bold">RecipeBook</span>
@@ -125,7 +125,7 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="-mt-[5.25rem]">
+        <div className="-mt-21">
           <HeroScene />
         </div>
 
@@ -154,14 +154,14 @@ export default function Home() {
         animate={{ y: [0, -10, 0], rotate: [0, 5, -5, 0] }}
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
       >
-        <div className="h-full w-full rounded-full bg-gradient-to-br from-primary to-secondary" />
+        <div className="h-full w-full rounded-full bg-linear-to-br from-primary to-secondary" />
       </motion.div>
       <motion.div
         className="pointer-events-none fixed right-20 top-20 z-0 h-12 w-12 opacity-10"
         animate={{ y: [0, 10, 0], rotate: [0, -5, 5, 0] }}
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
       >
-        <div className="h-full w-full rounded-full bg-gradient-to-br from-accent to-primary" />
+        <div className="h-full w-full rounded-full bg-linear-to-br from-accent to-primary" />
       </motion.div>
 
       {/* Toast Notifications */}

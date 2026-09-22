@@ -129,7 +129,7 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
   return (
     <div className="mx-auto max-w-4xl">
       <div className="mb-8 text-center">
-        <h1 className="mb-2 bg-gradient-to-r from-primary to-secondary bg-clip-text text-3xl font-bold text-transparent md:text-4xl">
+        <h1 className="mb-2 bg-linear-to-r from-primary to-secondary bg-clip-text text-3xl font-bold text-transparent md:text-4xl">
           Let&apos;s set up your RecipeBook
         </h1>
         <p className="mx-auto max-w-xl text-muted-foreground">
@@ -164,7 +164,7 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
         >
           <div className="mb-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary">
                 <current.icon className="h-5 w-5 text-primary-foreground" />
               </div>
               <div>
@@ -204,7 +204,7 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
         </motion.div>
       </AnimatePresence>
 
-      <div className="sticky bottom-5 z-50 mt-8 flex items-center justify-between rounded-lg border bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="sticky bottom-5 z-50 mt-8 flex items-center justify-between rounded-lg border bg-background/95 p-4 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
         {!isFirstStep ? (
           <Button variant="outline" onClick={handleBack}>
             <ArrowLeft className="mr-2 h-4 w-4" />

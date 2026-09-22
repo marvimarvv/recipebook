@@ -185,7 +185,7 @@ export default function AdditionalSettings({
                   >
                     -
                   </Button>
-                  <span className="min-w-[2rem] text-center text-lg font-medium">
+                  <span className="min-w-8 text-center text-lg font-medium">
                     {nutritionSettings.mealPlan.snackCount}
                   </span>
                   <Button

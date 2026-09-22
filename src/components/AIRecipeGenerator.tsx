@@ -50,10 +50,10 @@ const mealTypeIcons: Record<string, React.ReactNode> = {
 };
 
 const mealTypeColors: Record<string, string> = {
-  breakfast: "bg-gradient-to-br from-amber-500 to-orange-500",
-  lunch: "bg-gradient-to-br from-blue-500 to-cyan-500",
-  dinner: "bg-gradient-to-br from-purple-500 to-pink-500",
-  snack: "bg-gradient-to-br from-green-500 to-emerald-500",
+  breakfast: "bg-linear-to-br from-amber-500 to-orange-500",
+  lunch: "bg-linear-to-br from-blue-500 to-cyan-500",
+  dinner: "bg-linear-to-br from-purple-500 to-pink-500",
+  snack: "bg-linear-to-br from-green-500 to-emerald-500",
 };
 
 function DayMealsGrid({ meals }: { meals: MealPlan["meals"] }) {
@@ -348,7 +348,7 @@ export default function AIRecipeGenerator() {
             className="py-12 text-center"
           >
             <motion.div
-              className="mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary"
+              className="mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary"
               animate={{ rotate: [0, 360] }}
               transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
             >

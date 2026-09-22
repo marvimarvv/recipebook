@@ -188,7 +188,7 @@ export default function NutritionSettings({
                     dailyCalories: value,
                   });
                 }}
-                className="w-32 border-none bg-transparent text-center text-3xl font-bold focus:outline-none focus:ring-0"
+                className="w-32 border-none bg-transparent text-center text-3xl font-bold focus:outline-hidden focus:ring-0"
               />
               <span className="text-muted-foreground">calories/day</span>
             </div>
@@ -234,7 +234,7 @@ export default function NutritionSettings({
               </div>
               <div className="h-2 overflow-hidden rounded-full border border-input bg-muted">
                 <motion.div
-                  className={`h-full bg-gradient-to-r ${macro.color}`}
+                  className={`h-full bg-linear-to-r ${macro.color}`}
                   initial={{ width: 0 }}
                   animate={{ width: `${macro.value}%` }}
                   transition={{ duration: 0.5 }}
@@ -278,15 +278,15 @@ export default function NutritionSettings({
 
             <div className="flex h-4 overflow-hidden rounded-full border border-input bg-muted">
               <div
-                className="h-full bg-gradient-to-r from-blue-500 to-cyan-500"
+                className="h-full bg-linear-to-r from-blue-500 to-cyan-500"
                 style={{ width: `${proteinInput}%` }}
               />
               <div
-                className="h-full bg-gradient-to-r from-amber-500 to-orange-500"
+                className="h-full bg-linear-to-r from-amber-500 to-orange-500"
                 style={{ width: `${carbsInput}%` }}
               />
               <div
-                className="h-full bg-gradient-to-r from-green-500 to-emerald-500"
+                className="h-full bg-linear-to-r from-green-500 to-emerald-500"
                 style={{ width: `${fatInput}%` }}
               />
             </div>

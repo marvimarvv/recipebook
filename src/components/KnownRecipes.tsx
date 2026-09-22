@@ -357,7 +357,7 @@ export default function KnownRecipes({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs"
             onClick={() => setIsModalOpen(false)}
           >
             <motion.div
@@ -452,7 +452,7 @@ export default function KnownRecipes({
                           setNewRecipe({ ...newRecipe, name: e.target.value })
                         }
                         placeholder="e.g., Spaghetti Carbonara"
-                        className="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="w-full rounded-md border px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-primary"
                       />
                     </div>
                     <div>
@@ -469,7 +469,7 @@ export default function KnownRecipes({
                         }
                         placeholder="A brief description of the recipe"
                         rows={3}
-                        className="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="w-full rounded-md border px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-primary"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -486,7 +486,7 @@ export default function KnownRecipes({
                               prepTime: parseInt(e.target.value) || 0,
                             })
                           }
-                          className="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                          className="w-full rounded-md border px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-primary"
                         />
                       </div>
                       <div>
@@ -502,7 +502,7 @@ export default function KnownRecipes({
                               cookTime: parseInt(e.target.value) || 0,
                             })
                           }
-                          className="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                          className="w-full rounded-md border px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-primary"
                         />
                       </div>
                     </div>
@@ -520,7 +520,7 @@ export default function KnownRecipes({
                               servings: parseInt(e.target.value) || 1,
                             })
                           }
-                          className="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                          className="w-full rounded-md border px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-primary"
                         />
                       </div>
                       <div>
@@ -536,7 +536,7 @@ export default function KnownRecipes({
                               calories: parseInt(e.target.value) || 0,
                             })
                           }
-                          className="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                          className="w-full rounded-md border px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-primary"
                         />
                       </div>
                     </div>

@@ -45,7 +45,7 @@ export default function Toast() {
             className="flex min-w-[300px] items-center gap-3 rounded-lg border bg-white p-4 shadow-lg"
           >
             <div
-              className={`h-8 w-2 flex-shrink-0 rounded-l ${toastColors[toast.type]}`}
+              className={`h-8 w-2 shrink-0 rounded-l ${toastColors[toast.type]}`}
             />
             <div className="flex-1">
               <div className="mb-1 flex items-center gap-2">
