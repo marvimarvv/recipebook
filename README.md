@@ -51,19 +51,19 @@ A Progressive Web App (PWA) that lets you enter your nutrition preferences and l
 
 ## Tech Stack
 
-- **Framework**: Next.js 14 (App Router)
+- **Framework**: Next.js 16 (App Router)
 - **UI Components**: shadcn/ui
 - **Styling**: Tailwind CSS
 - **State Management**: Zustand
 - **Animations**: Framer Motion
 - **Icons**: Lucide React
-- **PWA**: next-pwa
+- **PWA**: Serwist (`@serwist/next`)
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18.17 or later
+- Node.js 20.9 or later
 - npm, yarn, or pnpm
 
 ### Installation

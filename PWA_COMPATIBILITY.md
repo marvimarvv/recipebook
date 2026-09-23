@@ -46,7 +46,7 @@ This document covers all the iOS/Safari-specific PWA implementations and known l
 
 ### **6. Next.js Configuration**
 
-- ✅ **PWA plugin** - next-pwa with proper configuration
+- ✅ **PWA plugin** - Serwist (`@serwist/next`) with proper configuration
 - ✅ **Cache strategies** - NetworkFirst for API, CacheFirst for assets
 - ✅ **Image optimization** - Proper sizes for all devices
 - ✅ **Headers** - Cache-Control headers for static assets
