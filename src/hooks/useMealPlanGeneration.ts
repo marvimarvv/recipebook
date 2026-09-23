@@ -14,6 +14,7 @@ import {
   checkMistralAPI,
   generateDayMealPlan,
   GenerationOptions,
+  RawGeneratedRecipe,
 } from "@/lib/mistral";
 
 // Builds a snapshot string of everything that influences the generated plan,
@@ -42,14 +43,14 @@ function addDays(date: Date, days: number): Date {
 }
 
 function toGeneratedRecipes(
-  mealsByType: Record<string, any[]> | undefined,
+  mealsByType: Record<string, RawGeneratedRecipe[]> | undefined,
 ): MealPlan["meals"] {
   const meals: MealPlan["meals"] = {};
   if (!mealsByType) return meals;
 
   Object.entries(mealsByType).forEach(([mealType, mealRecipes]) => {
     if (!Array.isArray(mealRecipes)) return;
-    const recipes: GeneratedRecipe[] = mealRecipes.map((recipe: any) => ({
+    const recipes: GeneratedRecipe[] = mealRecipes.map((recipe) => ({
       id: `${mealType}-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
       name: recipe.name || "Untitled Recipe",
       description: recipe.description || "",
@@ -58,18 +59,20 @@ function toGeneratedRecipes(
       prepTime: recipe.prepTime || 0,
       cookTime: recipe.cookTime || 0,
       servings: recipe.servings || 1,
-      nutrition: recipe.nutrition || {
-        calories: 0,
-        protein: 0,
-        carbs: 0,
-        fat: 0,
+      nutrition: {
+        calories: recipe.nutrition?.calories || 0,
+        protein: recipe.nutrition?.protein || 0,
+        carbs: recipe.nutrition?.carbs || 0,
+        fat: recipe.nutrition?.fat || 0,
       },
       mealType: mealType as "breakfast" | "lunch" | "dinner" | "snack",
       tags: recipe.tags || [],
     }));
 
-    const key = mealType === "snack" ? "snacks" : mealType;
-    (meals as any)[key] = recipes;
+    const key = (
+      mealType === "snack" ? "snacks" : mealType
+    ) as keyof MealPlan["meals"];
+    meals[key] = recipes;
   });
 
   return meals;
@@ -246,7 +249,6 @@ export function useMealPlanGeneration() {
     (state) => state.setGenerationProgress,
   );
   const setGenerationResult = useStore((state) => state.setGenerationResult);
-  const setGenerationError = useStore((state) => state.setGenerationError);
   const resetGeneration = useStore((state) => state.resetGeneration);
   const addWeekMealPlan = useStore((state) => state.addWeekMealPlan);
   const addToast = useStore((state) => state.addToast);
@@ -291,7 +293,7 @@ export function useMealPlanGeneration() {
       for (let i = 0; i < totalDays; i++) {
         const dayDate = addDays(weekStartDate, i);
         const dayLabel = WEEKDAY_LABELS[i];
-        let mealsByType: Record<string, any[]> | undefined;
+        let mealsByType: Record<string, RawGeneratedRecipe[]> | undefined;
 
         if (useAI) {
           try {
@@ -303,7 +305,7 @@ export function useMealPlanGeneration() {
             );
             mealsByType = day?.meals;
             if (!mealsByType) throw new Error("Empty response");
-          } catch (error) {
+          } catch {
             usedFallback = true;
             mealsByType = undefined;
           }

@@ -61,7 +61,7 @@ export async function GET() {
       }),
     });
     return NextResponse.json({ available: response.ok });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ available: false });
   }
 }
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
     const content: string = data.choices?.[0]?.message?.content ?? "";
     const cleaned = content.replace(/```json\n?|```/g, "").trim();
 
-    let parsed: any;
+    let parsed: Record<string, unknown>;
     try {
       parsed = JSON.parse(cleaned);
     } catch (parseError) {

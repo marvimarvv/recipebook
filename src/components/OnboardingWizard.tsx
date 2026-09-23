@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChefHat,
@@ -25,6 +25,7 @@ import { Progress } from "@/components/ui/progress";
 import PreferenceCategoryCards, {
   createEmptyPreferenceCardsProgress,
   type PreferenceCardsProgress,
+  type PreferenceFooterState,
 } from "@/components/PreferenceCategoryCards";
 import NutritionSettings from "@/components/NutritionSettings";
 import AdditionalSettings from "@/components/AdditionalSettings";
@@ -68,6 +69,8 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
   );
   const [preferenceProgress, setPreferenceProgress] =
     useState<PreferenceCardsProgress>(createEmptyPreferenceCardsProgress);
+  const [preferenceFooter, setPreferenceFooter] =
+    useState<PreferenceFooterState | null>(null);
   const [showMacroWarning, setShowMacroWarning] = useState(false);
   const completeOnboarding = useStore((state) => state.completeOnboarding);
   const startGeneration = useStore((state) => state.startGeneration);
@@ -87,14 +90,26 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
     nutritionSettings.carbGoal +
     nutritionSettings.fatGoal;
 
+  // Step 1 (preferences) drives its own footer label/target via
+  // onFooterStateChange - every other step keeps the plain Back/Next pair.
+  const activeFooter = step === 0 ? preferenceFooter : null;
+  const showBackButton = activeFooter
+    ? activeFooter.back !== null
+    : !isFirstStep;
+  const nextLabel = activeFooter ? activeFooter.next.label : "Next";
+
   const handleSkip = () => {
     completeOnboarding();
     onFinish();
   };
 
-  const handleBack = () => setStep((s) => Math.max(0, s - 1));
+  // Memoized: passed down to PreferenceCategoryCards as onRequestPrevStep/
+  // onRequestNextStep, which are effect dependencies there - unstable
+  // identities would re-trigger that effect (and its onFooterStateChange
+  // call) on every render, looping forever.
+  const handleBack = useCallback(() => setStep((s) => Math.max(0, s - 1)), []);
 
-  const handleNext = async () => {
+  const handleNext = useCallback(async () => {
     if (current.key === "nutrition" && macroTotal !== 100) {
       setShowMacroWarning(true);
       return;
@@ -122,7 +137,15 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
       },
       useAI,
     );
-  };
+  }, [
+    current.key,
+    macroTotal,
+    isLastStep,
+    completeOnboarding,
+    onFinish,
+    startGeneration,
+    generateWeek,
+  ]);
 
   const CurrentComponent = current.Component;
 
@@ -194,6 +217,10 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
               onRegisterAction={registerHeaderAction}
               progress={preferenceProgress}
               onProgressChange={setPreferenceProgress}
+              isFirstOverallStep={isFirstStep}
+              onRequestPrevStep={handleBack}
+              onRequestNextStep={handleNext}
+              onFooterStateChange={setPreferenceFooter}
             />
           ) : (
             <CurrentComponent
@@ -205,8 +232,13 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
       </AnimatePresence>
 
       <div className="sticky bottom-5 z-50 mt-8 flex items-center justify-between rounded-lg border bg-background/95 p-4 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
-        {!isFirstStep ? (
-          <Button variant="outline" onClick={handleBack}>
+        {showBackButton ? (
+          <Button
+            variant="outline"
+            onClick={
+              activeFooter?.back ? activeFooter.back.onClick : handleBack
+            }
+          >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
@@ -222,7 +254,7 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
           <HoverArrowCursor>
             {({ x, y, labelRef }) => (
               <Button
-                onClick={handleNext}
+                onClick={activeFooter ? activeFooter.next.onClick : handleNext}
                 className="transition-transform hover:scale-105"
               >
                 <motion.span
@@ -230,7 +262,7 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
                   style={{ x, y }}
                   className="flex items-center"
                 >
-                  Next
+                  {nextLabel}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </motion.span>
               </Button>
@@ -242,7 +274,9 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
       <AlertDialog open={showMacroWarning} onOpenChange={setShowMacroWarning}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Macros don&apos;t add up to 100%</AlertDialogTitle>
+            <AlertDialogTitle>
+              Macros don&apos;t add up to 100%
+            </AlertDialogTitle>
             <AlertDialogDescription>
               Your protein, carb, and fat goals currently total {macroTotal}%.
               Adjust the sliders so they add up to exactly 100% before

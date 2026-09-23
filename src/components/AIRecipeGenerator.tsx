@@ -172,7 +172,7 @@ export default function AIRecipeGenerator() {
       try {
         const available = await checkMistralAPI();
         setApiAvailable(available);
-      } catch (error) {
+      } catch {
         setApiAvailable(false);
       }
     };

@@ -159,13 +159,13 @@ export function SwipeCardStack<T>({
                       <>
                         <motion.div
                           style={{ opacity: likeOpacity }}
-                          className="pointer-events-none absolute left-4 top-4 z-10 -rotate-12 rounded-md border-4 border-green-500 px-3 py-1 text-lg font-bold text-green-500"
+                          className="pointer-events-none absolute top-4 left-4 z-10 -rotate-12 rounded-md border-4 border-green-500 px-3 py-1 text-lg font-bold text-green-500"
                         >
                           {rightLabel}
                         </motion.div>
                         <motion.div
                           style={{ opacity: nopeOpacity }}
-                          className="pointer-events-none absolute right-4 top-4 z-10 rotate-12 rounded-md border-4 border-destructive px-3 py-1 text-lg font-bold text-destructive"
+                          className="pointer-events-none absolute top-4 right-4 z-10 rotate-12 rounded-md border-4 border-destructive px-3 py-1 text-lg font-bold text-destructive"
                         >
                           {leftLabel}
                         </motion.div>

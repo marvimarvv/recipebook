@@ -16,7 +16,16 @@ export interface SliderProps extends Omit<
 
 const Slider = React.forwardRef<HTMLInputElement, SliderProps>(
   (
-    { className, value, onValueChange, min = 0, max = 100, step = 1, style, ...props },
+    {
+      className,
+      value,
+      onValueChange,
+      min = 0,
+      max = 100,
+      step = 1,
+      style,
+      ...props
+    },
     ref,
   ) => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -19,7 +19,7 @@ export function isStandalone(): boolean {
     return true;
 
   // Check for Capacitor/Cordova
-  if ((window as any).Capacitor) return true;
+  if ((window as Window & { Capacitor?: unknown }).Capacitor) return true;
 
   return false;
 }
@@ -268,7 +268,7 @@ export async function checkPWACache() {
 
     const caches = await window.caches.keys();
     return caches.length > 0;
-  } catch (error) {
+  } catch {
     return false;
   }
 }

@@ -9,6 +9,30 @@ export interface GenerationOptions {
   randomize: boolean;
 }
 
+// Shape of a single recipe as returned by the AI backend. Fields are
+// optional/loosely typed since this is unvalidated JSON from an LLM
+// response; callers apply their own defaults for missing fields.
+export interface RawGeneratedRecipe {
+  name?: string;
+  description?: string;
+  ingredients?: string[];
+  instructions?: string[];
+  prepTime?: number;
+  cookTime?: number;
+  servings?: number;
+  nutrition?: {
+    calories?: number;
+    protein?: number;
+    carbs?: number;
+    fat?: number;
+  };
+  tags?: string[];
+}
+
+export interface RawDayMealPlan {
+  meals?: Record<string, RawGeneratedRecipe[]>;
+}
+
 // Client-side helpers that call our own server-side API route
 // (src/app/api/generate/route.ts) instead of talking to Mistral directly.
 // This keeps the Mistral API key server-only and out of the browser bundle.
@@ -20,7 +44,7 @@ export async function checkMistralAPI(): Promise<boolean> {
     if (!response.ok) return false;
     const data = await response.json();
     return Boolean(data.available);
-  } catch (error) {
+  } catch {
     return false;
   }
 }
@@ -31,7 +55,7 @@ export async function generateDayMealPlan(
   nutritionSettings: NutritionSettings,
   options: GenerationOptions,
   dayLabel: string,
-): Promise<any> {
+): Promise<RawDayMealPlan | null> {
   const response = await fetch("/api/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

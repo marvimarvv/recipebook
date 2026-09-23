@@ -105,6 +105,9 @@ export function HoverArrowCursor({
       onMouseLeave={handleMouseLeave}
       onMouseMove={handleMouseMove}
     >
+      {/* eslint-disable-next-line react-hooks/refs -- labelRef is a stable
+          callback ref forwarded to the caller-rendered label; no `.current`
+          is read here during render. */}
       {children({ x: springX, y: springY, labelRef })}
     </div>
   );

@@ -238,7 +238,7 @@ export default function FoodPreferences({
                 else setNewDislike("");
               }
             }}
-            className="flex-1 rounded-md border px-3 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-primary"
+            className="flex-1 rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:outline-hidden"
           />
           <Button
             size="sm"

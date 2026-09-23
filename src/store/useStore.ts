@@ -112,6 +112,25 @@ const defaultNutritionSettings: NutritionSettings = {
   },
 };
 
+// Shapes of persisted data as it comes back out of localStorage: zustand's
+// persist middleware round-trips state through JSON, so Date fields are
+// deserialized as strings (or may be absent entirely on very old versions).
+type PersistedRecipe = Omit<Recipe, "createdAt"> & {
+  createdAt?: string | Date;
+};
+type PersistedMealPlan = Omit<MealPlan, "date"> & { date?: string | Date };
+type PersistedWeekMealPlan = Omit<WeekMealPlan, "weekStartDate" | "days"> & {
+  weekStartDate?: string | Date;
+  days?: PersistedMealPlan[];
+};
+interface PersistedAppState {
+  hasCompletedOnboarding?: boolean;
+  preferences?: UserPreferences;
+  recipes?: PersistedRecipe[];
+  mealPlans?: PersistedMealPlan[];
+  weekMealPlans?: PersistedWeekMealPlan[];
+}
+
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
@@ -271,10 +290,10 @@ export const useStore = create<AppState>()(
       // come back as strings) and mark pre-existing users as already onboarded
       // so they aren't forced through the setup wizard retroactively.
       migrate: (persistedState, version) => {
-        const state = (persistedState ?? {}) as Record<string, any>;
+        const state = (persistedState ?? {}) as PersistedAppState;
 
         if (Array.isArray(state.recipes)) {
-          state.recipes = state.recipes.map((recipe: any) => ({
+          state.recipes = state.recipes.map((recipe) => ({
             ...recipe,
             createdAt: recipe.createdAt
               ? new Date(recipe.createdAt)
@@ -282,19 +301,19 @@ export const useStore = create<AppState>()(
           }));
         }
         if (Array.isArray(state.mealPlans)) {
-          state.mealPlans = state.mealPlans.map((mealPlan: any) => ({
+          state.mealPlans = state.mealPlans.map((mealPlan) => ({
             ...mealPlan,
             date: mealPlan.date ? new Date(mealPlan.date) : new Date(),
           }));
         }
         if (Array.isArray(state.weekMealPlans)) {
-          state.weekMealPlans = state.weekMealPlans.map((weekPlan: any) => ({
+          state.weekMealPlans = state.weekMealPlans.map((weekPlan) => ({
             ...weekPlan,
             weekStartDate: weekPlan.weekStartDate
               ? new Date(weekPlan.weekStartDate)
               : new Date(),
             days: Array.isArray(weekPlan.days)
-              ? weekPlan.days.map((day: any) => ({
+              ? weekPlan.days.map((day) => ({
                   ...day,
                   date: day.date ? new Date(day.date) : new Date(),
                 }))

@@ -178,10 +178,15 @@ export default function PreferenceSwipeDeck({
     onCanProceedChange?.(finished);
   }, [finished, onCanProceedChange]);
 
-  useEffect(() => {
+  // Reset the free-text inputs when the active deck changes. Done during
+  // render (rather than in an effect) to avoid an extra render pass —
+  // see https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [prevActiveDeckKey, setPrevActiveDeckKey] = useState(activeDeck?.key);
+  if (activeDeck?.key !== prevActiveDeckKey) {
+    setPrevActiveDeckKey(activeDeck?.key);
     setFreeTextValue("");
     setFreeTextDislikeValue("");
-  }, [activeDeck?.key]);
+  }
 
   const remaining = useMemo(() => {
     if (!activeDeck) return [];

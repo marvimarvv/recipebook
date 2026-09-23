@@ -2,17 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Plus,
-  Heart,
-  Clock,
-  Users,
-  Flame,
-  Edit,
-  Trash2,
-  Eye,
-  X,
-} from "lucide-react";
+import { Plus, Heart, Clock, Users, Flame, Trash2, Eye, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -110,7 +100,6 @@ export default function KnownRecipes({
       onClick: handleOpenAddRecipe,
     });
     return () => onRegisterAction(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onRegisterAction]);
 
   const sampleRecipes: Recipe[] = [
@@ -452,7 +441,7 @@ export default function KnownRecipes({
                           setNewRecipe({ ...newRecipe, name: e.target.value })
                         }
                         placeholder="e.g., Spaghetti Carbonara"
-                        className="w-full rounded-md border px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-primary"
+                        className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-primary focus:outline-hidden"
                       />
                     </div>
                     <div>
@@ -469,7 +458,7 @@ export default function KnownRecipes({
                         }
                         placeholder="A brief description of the recipe"
                         rows={3}
-                        className="w-full rounded-md border px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-primary"
+                        className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-primary focus:outline-hidden"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -486,7 +475,7 @@ export default function KnownRecipes({
                               prepTime: parseInt(e.target.value) || 0,
                             })
                           }
-                          className="w-full rounded-md border px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-primary"
+                          className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-primary focus:outline-hidden"
                         />
                       </div>
                       <div>
@@ -502,7 +491,7 @@ export default function KnownRecipes({
                               cookTime: parseInt(e.target.value) || 0,
                             })
                           }
-                          className="w-full rounded-md border px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-primary"
+                          className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-primary focus:outline-hidden"
                         />
                       </div>
                     </div>
@@ -520,7 +509,7 @@ export default function KnownRecipes({
                               servings: parseInt(e.target.value) || 1,
                             })
                           }
-                          className="w-full rounded-md border px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-primary"
+                          className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-primary focus:outline-hidden"
                         />
                       </div>
                       <div>
@@ -536,7 +525,7 @@ export default function KnownRecipes({
                               calories: parseInt(e.target.value) || 0,
                             })
                           }
-                          className="w-full rounded-md border px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-primary"
+                          className="w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-primary focus:outline-hidden"
                         />
                       </div>
                     </div>

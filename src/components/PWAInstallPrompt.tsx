@@ -1,39 +1,73 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Download, X, Smartphone, Tablet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+// Non-standard but widely supported install-prompt event; not part of the
+// DOM lib types.
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{
+    outcome: "accepted" | "dismissed";
+    platform: string;
+  }>;
+}
+
+// Avoids a client-only effect purely to flip a "mounted" flag: the snapshot
+// differs between server (false) and client (true), so React re-renders once
+// after hydration, same timing as the previous effect-based approach.
+function subscribeNever() {
+  return () => {};
+}
+function getMountedSnapshot() {
+  return true;
+}
+function getMountedServerSnapshot() {
+  return false;
+}
+
+// Computed once via a lazy useState initializer instead of an effect, since
+// these are one-time feature checks (not a live subscription). Guarded for
+// SSR where `window` doesn't exist.
+function computeIsIOS(): boolean {
+  if (typeof window === "undefined") return false;
+  const userAgent = window.navigator.userAgent.toLowerCase();
+  return (
+    /iphone|ipad|ipod/.test(userAgent) ||
+    (window.navigator.platform === "MacIntel" &&
+      window.navigator.maxTouchPoints > 1)
+  );
+}
+
+function computeIsStandalone(): boolean {
+  if (typeof window === "undefined") return false;
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    !!(window.navigator as Navigator & { standalone?: boolean }).standalone
+  );
+}
+
 export default function PWAInstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
-  const [isIOS, setIsIOS] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
+  const [isIOS] = useState(computeIsIOS);
+  const [isStandalone] = useState(computeIsStandalone);
+  const mounted = useSyncExternalStore(
+    subscribeNever,
+    getMountedSnapshot,
+    getMountedServerSnapshot,
+  );
 
   useEffect(() => {
-    setMounted(true);
-    // Check if we're on iOS
-    const userAgent = window.navigator.userAgent.toLowerCase();
-    const isIOSDevice =
-      /iphone|ipad|ipod/.test(userAgent) ||
-      (window.navigator.platform === "MacIntel" &&
-        window.navigator.maxTouchPoints > 1);
-    setIsIOS(isIOSDevice);
-
-    // Check if app is already installed as PWA
-    const isStandaloneMode =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      !!(window.navigator as Navigator & { standalone?: boolean }).standalone;
-    setIsStandalone(isStandaloneMode);
-
     // Check if PWA installation is available
     const handleBeforeInstallPrompt = (e: Event) => {
       // Prevent the mini-infobar from appearing on desktop
       e.preventDefault();
       // Stash the event so it can be triggered later
-      setDeferredPrompt(e);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
       // Show our custom install prompt
       setShowPrompt(true);
     };
@@ -41,7 +75,7 @@ export default function PWAInstallPrompt() {
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
     // iOS specific: Check if we should show install prompt
-    if (isIOSDevice && !isStandaloneMode) {
+    if (isIOS && !isStandalone) {
       // iOS doesn't fire beforeinstallprompt, so we show our own prompt
       const showIOSPrompt =
         localStorage.getItem("recipebook-ios-prompt-shown") !== "true";
@@ -58,13 +92,13 @@ export default function PWAInstallPrompt() {
         handleBeforeInstallPrompt,
       );
     };
-  }, []);
+  }, [isIOS, isStandalone]);
 
   const handleInstall = async () => {
     if (deferredPrompt) {
       // Show the install prompt for non-iOS devices
-      (deferredPrompt as any).prompt();
-      const { outcome } = await (deferredPrompt as any).userChoice;
+      await deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
       if (outcome === "accepted") {
         localStorage.setItem("recipebook-pwa-installed", "true");
       }
@@ -123,7 +157,7 @@ export default function PWAInstallPrompt() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:max-w-md"
+          className="fixed right-4 bottom-4 left-4 z-50 md:right-4 md:left-auto md:max-w-md"
         >
           <div className="rounded-lg border border-border bg-background p-4 shadow-lg">
             <div className="mb-3 flex items-start justify-between">
@@ -163,7 +197,7 @@ export default function PWAInstallPrompt() {
                 className="w-full text-xs"
                 onClick={handleDontShowAgain}
               >
-                Don't show again
+                Don&apos;t show again
               </Button>
             </div>
 
@@ -175,7 +209,7 @@ export default function PWAInstallPrompt() {
               >
                 <p className="flex items-center gap-2">
                   <Tablet className="h-3 w-3" />
-                  Works offline and syncs when you're back online
+                  Works offline and syncs when you&apos;re back online
                 </p>
               </motion.div>
             )}

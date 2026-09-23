@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { Heart, RotateCcw, Sparkles, Utensils } from "lucide-react";
@@ -29,29 +29,38 @@ const HeroScene = dynamic(() => import("@/components/HeroScene"), {
   ssr: false,
 });
 
+// The persisted onboarding flag rehydrates from localStorage *after* the
+// first client render, so we wait for hydration before deciding whether to
+// show the wizard - otherwise returning users would see a flash of it.
+// `useStore.persist` only exists in a browser (zustand skips attaching it
+// when `localStorage` is unavailable, e.g. during Next.js server
+// prerendering), and the server snapshot always reports "not hydrated yet"
+// so client/server markup matches on the initial render.
+function subscribeToHydration(onStoreChange: () => void) {
+  const persistApi = useStore.persist;
+  if (!persistApi) return () => {};
+  return persistApi.onFinishHydration(onStoreChange);
+}
+
+function getHasHydrated() {
+  return useStore.persist?.hasHydrated() ?? true;
+}
+
+function getHasHydratedServerSnapshot() {
+  return false;
+}
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState("generate");
-  const [hasHydrated, setHasHydrated] = useState(false);
+  const hasHydrated = useSyncExternalStore(
+    subscribeToHydration,
+    getHasHydrated,
+    getHasHydratedServerSnapshot,
+  );
   const hasCompletedOnboarding = useStore(
     (state) => state.hasCompletedOnboarding,
   );
   const restartOnboarding = useStore((state) => state.restartOnboarding);
-
-  // The persisted onboarding flag rehydrates from localStorage *after* the
-  // first client render, so wait for hydration before deciding whether to
-  // show the wizard - otherwise returning users would see a flash of it.
-  // `useStore.persist` only exists in a browser (zustand skips attaching it
-  // when `localStorage` is unavailable, e.g. during Next.js server
-  // prerendering), so this must only ever run client-side inside an effect,
-  // never during render.
-  useEffect(() => {
-    const persistApi = useStore.persist;
-    if (!persistApi || persistApi.hasHydrated()) {
-      setHasHydrated(true);
-      return;
-    }
-    return persistApi.onFinishHydration(() => setHasHydrated(true));
-  }, []);
 
   if (!hasHydrated) {
     return <SplashScreen />;
@@ -157,7 +166,7 @@ export default function Home() {
         <div className="h-full w-full rounded-full bg-linear-to-br from-primary to-secondary" />
       </motion.div>
       <motion.div
-        className="pointer-events-none fixed right-20 top-20 z-0 h-12 w-12 opacity-10"
+        className="pointer-events-none fixed top-20 right-20 z-0 h-12 w-12 opacity-10"
         animate={{ y: [0, 10, 0], rotate: [0, -5, 5, 0] }}
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
       >

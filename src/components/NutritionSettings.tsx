@@ -2,15 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import {
-  Settings,
-  Flame,
-  Dumbbell,
-  Wheat,
-  Droplets,
-  TrendingUp,
-  RotateCcw,
-} from "lucide-react";
+import { Flame, Dumbbell, Wheat, Droplets, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -188,7 +180,7 @@ export default function NutritionSettings({
                     dailyCalories: value,
                   });
                 }}
-                className="w-32 border-none bg-transparent text-center text-3xl font-bold focus:outline-hidden focus:ring-0"
+                className="w-32 border-none bg-transparent text-center text-3xl font-bold focus:ring-0 focus:outline-hidden"
               />
               <span className="text-muted-foreground">calories/day</span>
             </div>
