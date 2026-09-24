@@ -3,7 +3,7 @@
 import { useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
-import { Heart, RotateCcw, Sparkles, Utensils } from "lucide-react";
+import { RotateCcw, Sparkles, Utensils } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
@@ -17,7 +17,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import KnownRecipes from "@/components/KnownRecipes";
 import AIRecipeGenerator from "@/components/AIRecipeGenerator";
 import OnboardingWizard from "@/components/OnboardingWizard";
 import Toast from "@/components/Toast";
@@ -83,7 +82,7 @@ export default function Home() {
         {/* Header */}
         <header className="sticky top-5 z-50 mx-auto w-[clamp(300px,90vw,1200px)] border bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
           <div className="container flex h-16 items-center gap-6">
-            <div className="flex items-center gap-2">
+            <div className="hidden items-center gap-2 sm:flex">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary">
                 <Utensils className="h-5 w-5 text-primary-foreground" />
               </div>
@@ -98,13 +97,6 @@ export default function Home() {
                   <Sparkles className="h-4 w-4" />
                   <span>My Meal Plan</span>
                 </TabsTrigger>
-                <TabsTrigger
-                  value="recipes"
-                  className="flex flex-1 items-center justify-center gap-2"
-                >
-                  <Heart className="h-4 w-4" />
-                  <span>My Recipes</span>
-                </TabsTrigger>
               </TabsList>
             </nav>
             <AlertDialog>
@@ -118,9 +110,9 @@ export default function Home() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Restart the setup wizard?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This walks you through Preferences, Recipes, and Nutrition
-                    again and generates a new week when you finish. Your
-                    existing saved recipes and meal plans won&apos;t be deleted.
+                    This walks you through Preferences and Nutrition again
+                    and generates a new week when you finish. Your existing
+                    meal plans won&apos;t be deleted.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -149,9 +141,6 @@ export default function Home() {
           >
             <TabsContent value="generate">
               <AIRecipeGenerator />
-            </TabsContent>
-            <TabsContent value="recipes">
-              <KnownRecipes />
             </TabsContent>
           </motion.div>
         </main>

@@ -14,26 +14,6 @@ export interface WizardStepProps {
   onCanProceedChange?: (ready: boolean) => void;
 }
 
-// Recipe Types
-export interface Recipe {
-  id: string;
-  name: string;
-  description: string;
-  ingredients: string[];
-  instructions: string[];
-  prepTime: number; // in minutes
-  cookTime: number; // in minutes
-  servings: number;
-  calories: number;
-  protein: number; // in grams
-  carbs: number; // in grams
-  fat: number; // in grams
-  tags: string[];
-  image?: string;
-  createdAt: Date;
-  isFavorite: boolean;
-}
-
 // Food Preferences Types
 export interface FoodPreferences {
   id: string;

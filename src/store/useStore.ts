@@ -5,7 +5,6 @@ import { persist } from "zustand/middleware";
 import {
   UserPreferences,
   NutritionSettings,
-  Recipe,
   MealPlan,
   WeekMealPlan,
   ToastMessage,
@@ -51,13 +50,6 @@ interface AppState {
     settings:
       NutritionSettings | ((prev: NutritionSettings) => NutritionSettings),
   ) => void;
-
-  // Recipes
-  recipes: Recipe[];
-  addRecipe: (recipe: Recipe) => void;
-  updateRecipe: (id: string, recipe: Partial<Recipe>) => void;
-  deleteRecipe: (id: string) => void;
-  toggleFavorite: (id: string) => void;
 
   // Meal Plans (legacy single-day, kept for backwards compatibility)
   mealPlans: MealPlan[];
@@ -115,9 +107,6 @@ const defaultNutritionSettings: NutritionSettings = {
 // Shapes of persisted data as it comes back out of localStorage: zustand's
 // persist middleware round-trips state through JSON, so Date fields are
 // deserialized as strings (or may be absent entirely on very old versions).
-type PersistedRecipe = Omit<Recipe, "createdAt"> & {
-  createdAt?: string | Date;
-};
 type PersistedMealPlan = Omit<MealPlan, "date"> & { date?: string | Date };
 type PersistedWeekMealPlan = Omit<WeekMealPlan, "weekStartDate" | "days"> & {
   weekStartDate?: string | Date;
@@ -126,7 +115,6 @@ type PersistedWeekMealPlan = Omit<WeekMealPlan, "weekStartDate" | "days"> & {
 interface PersistedAppState {
   hasCompletedOnboarding?: boolean;
   preferences?: UserPreferences;
-  recipes?: PersistedRecipe[];
   mealPlans?: PersistedMealPlan[];
   weekMealPlans?: PersistedWeekMealPlan[];
 }
@@ -168,29 +156,6 @@ export const useStore = create<AppState>()(
               ? settings(get().nutritionSettings)
               : settings,
         }),
-
-      // Recipes
-      recipes: [] as Recipe[],
-      addRecipe: (recipe: Recipe) =>
-        set((state) => ({ recipes: [...state.recipes, recipe] })),
-      updateRecipe: (id: string, updates: Partial<Recipe>) =>
-        set((state) => ({
-          recipes: state.recipes.map((recipe) =>
-            recipe.id === id ? { ...recipe, ...updates } : recipe,
-          ),
-        })),
-      deleteRecipe: (id: string) =>
-        set((state) => ({
-          recipes: state.recipes.filter((recipe) => recipe.id !== id),
-        })),
-      toggleFavorite: (id: string) =>
-        set((state) => ({
-          recipes: state.recipes.map((recipe) =>
-            recipe.id === id
-              ? { ...recipe, isFavorite: !recipe.isFavorite }
-              : recipe,
-          ),
-        })),
 
       // Meal Plans
       mealPlans: [] as MealPlan[],
@@ -268,7 +233,6 @@ export const useStore = create<AppState>()(
           hasCompletedOnboarding: false,
           preferences: defaultPreferences,
           nutritionSettings: defaultNutritionSettings,
-          recipes: [] as Recipe[],
           mealPlans: [] as MealPlan[],
           weekMealPlans: [] as WeekMealPlan[],
           generation: defaultGenerationState,
@@ -282,7 +246,6 @@ export const useStore = create<AppState>()(
         hasCompletedOnboarding: state.hasCompletedOnboarding,
         preferences: state.preferences,
         nutritionSettings: state.nutritionSettings,
-        recipes: state.recipes,
         mealPlans: state.mealPlans,
         weekMealPlans: state.weekMealPlans,
       }),
@@ -292,14 +255,6 @@ export const useStore = create<AppState>()(
       migrate: (persistedState, version) => {
         const state = (persistedState ?? {}) as PersistedAppState;
 
-        if (Array.isArray(state.recipes)) {
-          state.recipes = state.recipes.map((recipe) => ({
-            ...recipe,
-            createdAt: recipe.createdAt
-              ? new Date(recipe.createdAt)
-              : new Date(),
-          }));
-        }
         if (Array.isArray(state.mealPlans)) {
           state.mealPlans = state.mealPlans.map((mealPlan) => ({
             ...mealPlan,
@@ -323,7 +278,6 @@ export const useStore = create<AppState>()(
 
         if (version < 1 && state.hasCompletedOnboarding === undefined) {
           const hasExistingData =
-            (Array.isArray(state.recipes) && state.recipes.length > 0) ||
             (Array.isArray(state.mealPlans) && state.mealPlans.length > 0) ||
             (Array.isArray(state.weekMealPlans) &&
               state.weekMealPlans.length > 0) ||
@@ -346,16 +300,9 @@ export const useStore = create<AppState>()(
 export const usePreferences = () => useStore((state) => state.preferences);
 export const useNutritionSettings = () =>
   useStore((state) => state.nutritionSettings);
-export const useRecipes = () => useStore((state) => state.recipes);
 export const useMealPlans = () => useStore((state) => state.mealPlans);
 export const useWeekMealPlans = () => useStore((state) => state.weekMealPlans);
 export const useToasts = () => useStore((state) => state.toasts);
-
-export const useAddRecipe = () => useStore((state) => state.addRecipe);
-export const useUpdateRecipe = () => useStore((state) => state.updateRecipe);
-export const useDeleteRecipe = () => useStore((state) => state.deleteRecipe);
-export const useToggleFavorite = () =>
-  useStore((state) => state.toggleFavorite);
 
 export const useAddToast = () => useStore((state) => state.addToast);
 export const useRemoveToast = () => useStore((state) => state.removeToast);
