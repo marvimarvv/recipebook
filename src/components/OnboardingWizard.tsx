@@ -128,15 +128,7 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
     startGeneration(7); // immediate "generating" feedback on the Generate tab
 
     const useAI = await checkMistralAPI();
-    void generateWeek(
-      {
-        cookingTime: "medium",
-        difficulty: "medium",
-        includeAllPreferences: true,
-        randomize: false,
-      },
-      useAI,
-    );
+    void generateWeek(useAI);
   }, [
     current.key,
     macroTotal,

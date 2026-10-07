@@ -21,6 +21,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PREFERENCE_CHIP_CLASSES } from "@/lib/preferenceChips";
 import { useStore } from "@/store/useStore";
 import {
   CUISINE_OPTIONS,
@@ -149,15 +150,15 @@ export default function FoodPreferences({
           {preferences[category.key as StringArrayKey].map((item) => (
             <Badge
               key={item}
-              variant="secondary"
-              className="flex items-center gap-1"
+              variant="outline"
+              className={`flex items-center gap-1 font-medium ${PREFERENCE_CHIP_CLASSES[category.key as StringArrayKey]}`}
             >
               {item}
               <button
                 onClick={() =>
                   handleRemovePreference(category.key as StringArrayKey, item)
                 }
-                className="rounded-full p-0.5 transition-colors hover:bg-destructive/20"
+                className="rounded-full p-0.5 transition-colors hover:bg-current/15"
               >
                 <X className="h-3 w-3" />
               </button>

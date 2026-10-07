@@ -9,6 +9,7 @@ import {
   WeekMealPlan,
   ToastMessage,
 } from "@/types";
+import type { GenerationOptions } from "@/lib/mistral";
 
 export type GenerationStatus = "idle" | "generating" | "success" | "error";
 
@@ -50,6 +51,10 @@ interface AppState {
     settings:
       NutritionSettings | ((prev: NutritionSettings) => NutritionSettings),
   ) => void;
+
+  // Generation Options
+  generationOptions: GenerationOptions;
+  setGenerationOptions: (options: GenerationOptions) => void;
 
   // Meal Plans (legacy single-day, kept for backwards compatibility)
   mealPlans: MealPlan[];
@@ -104,6 +109,11 @@ const defaultNutritionSettings: NutritionSettings = {
   },
 };
 
+const defaultGenerationOptions: GenerationOptions = {
+  cookingTime: "medium",
+  difficulty: "medium",
+};
+
 // Shapes of persisted data as it comes back out of localStorage: zustand's
 // persist middleware round-trips state through JSON, so Date fields are
 // deserialized as strings (or may be absent entirely on very old versions).
@@ -156,6 +166,11 @@ export const useStore = create<AppState>()(
               ? settings(get().nutritionSettings)
               : settings,
         }),
+
+      // Generation Options
+      generationOptions: defaultGenerationOptions,
+      setGenerationOptions: (options: GenerationOptions) =>
+        set({ generationOptions: options }),
 
       // Meal Plans
       mealPlans: [] as MealPlan[],
@@ -233,6 +248,7 @@ export const useStore = create<AppState>()(
           hasCompletedOnboarding: false,
           preferences: defaultPreferences,
           nutritionSettings: defaultNutritionSettings,
+          generationOptions: defaultGenerationOptions,
           mealPlans: [] as MealPlan[],
           weekMealPlans: [] as WeekMealPlan[],
           generation: defaultGenerationState,
@@ -246,6 +262,7 @@ export const useStore = create<AppState>()(
         hasCompletedOnboarding: state.hasCompletedOnboarding,
         preferences: state.preferences,
         nutritionSettings: state.nutritionSettings,
+        generationOptions: state.generationOptions,
         mealPlans: state.mealPlans,
         weekMealPlans: state.weekMealPlans,
       }),

@@ -11,7 +11,6 @@ import {
   WEEKDAY_LABELS,
 } from "@/types";
 import {
-  checkMistralAPI,
   generateDayMealPlan,
   GenerationOptions,
   RawGeneratedRecipe,
@@ -243,6 +242,7 @@ function sumNutrition(meals: MealPlan["meals"]) {
 export function useMealPlanGeneration() {
   const preferences = useStore((state) => state.preferences);
   const nutritionSettings = useStore((state) => state.nutritionSettings);
+  const options = useStore((state) => state.generationOptions);
   const generation = useStore((state) => state.generation);
   const startGeneration = useStore((state) => state.startGeneration);
   const setGenerationProgress = useStore(
@@ -255,34 +255,20 @@ export function useMealPlanGeneration() {
 
   const isStale = useMemo(() => {
     if (!generation.result || !generation.snapshot) return false;
-    // Options aren't tracked in the store, so we compare only preferences +
-    // nutrition here; the caller can pass the full snapshot for exact checks
-    // via isSnapshotStale below when generation options are also available.
-    try {
-      const snapshot = JSON.parse(generation.snapshot);
-      return (
-        JSON.stringify(snapshot.preferences) !== JSON.stringify(preferences) ||
-        JSON.stringify(snapshot.nutritionSettings) !==
-          JSON.stringify(nutritionSettings)
-      );
-    } catch {
-      return false;
-    }
-  }, [generation.result, generation.snapshot, preferences, nutritionSettings]);
-
-  const isSnapshotStale = useCallback(
-    (options: GenerationOptions) => {
-      if (!generation.result || !generation.snapshot) return false;
-      return (
-        generation.snapshot !==
-        buildGenerationSnapshot(preferences, nutritionSettings, options)
-      );
-    },
-    [generation.result, generation.snapshot, preferences, nutritionSettings],
-  );
+    return (
+      generation.snapshot !==
+      buildGenerationSnapshot(preferences, nutritionSettings, options)
+    );
+  }, [
+    generation.result,
+    generation.snapshot,
+    preferences,
+    nutritionSettings,
+    options,
+  ]);
 
   const generateWeek = useCallback(
-    async (options: GenerationOptions, useAI: boolean) => {
+    async (useAI: boolean) => {
       const totalDays = 7;
       startGeneration(totalDays);
 
@@ -367,6 +353,7 @@ export function useMealPlanGeneration() {
     [
       preferences,
       nutritionSettings,
+      options,
       startGeneration,
       setGenerationProgress,
       setGenerationResult,
@@ -387,10 +374,8 @@ export function useMealPlanGeneration() {
   return {
     generation,
     isStale,
-    isSnapshotStale,
     generateWeek,
     resetGeneration,
     saveWeekMealPlan,
-    checkMistralAPI,
   };
 }

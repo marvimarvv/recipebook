@@ -5,8 +5,6 @@ import { UserPreferences, NutritionSettings } from "@/types";
 export interface GenerationOptions {
   cookingTime: "quick" | "medium" | "long";
   difficulty: "easy" | "medium" | "hard";
-  includeAllPreferences: boolean;
-  randomize: boolean;
 }
 
 // Shape of a single recipe as returned by the AI backend. Fields are

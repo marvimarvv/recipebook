@@ -33,8 +33,6 @@ interface GenerateDayRequestBody {
   options: {
     cookingTime: string;
     difficulty: string;
-    includeAllPreferences: boolean;
-    randomize: boolean;
   };
   dayLabel: string;
 }
@@ -219,8 +217,6 @@ Include: ${mealPlanParts.join(", ") || "all meals"}
 GENERATION OPTIONS:
 Cooking time: ${options.cookingTime}
 Difficulty: ${options.difficulty}
-Include all preferences: ${options.includeAllPreferences ? "yes" : "no"}
-Randomize: ${options.randomize ? "yes" : "no"}
 
 Vary the recipes from what you'd suggest for other days of the week - avoid repeating the same dish.
 

@@ -110,9 +110,9 @@ export default function Home() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Restart the setup wizard?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This walks you through Preferences and Nutrition again
-                    and generates a new week when you finish. Your existing
-                    meal plans won&apos;t be deleted.
+                    This walks you through Preferences and Nutrition again and
+                    generates a new week when you finish. Your existing meal
+                    plans won&apos;t be deleted.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
