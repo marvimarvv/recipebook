@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ChefHat,
+  RotateCcw,
   Heart,
   AlertCircle,
   Utensils,
@@ -202,7 +203,11 @@ export default function PreferenceCategoryCards({
 
   useEffect(() => {
     if (!onRegisterAction) return;
-    onRegisterAction({ label: "Reset All", onClick: handleResetAll });
+    onRegisterAction({
+      label: "Reset preferences",
+      icon: RotateCcw,
+      onClick: handleResetAll,
+    });
     return () => onRegisterAction(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onRegisterAction]);

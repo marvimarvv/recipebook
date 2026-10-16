@@ -57,19 +57,13 @@ export default function NutritionSettings({
   };
 
   const handleReset = () => {
-    setNutritionSettings({
+    setNutritionSettings((prev) => ({
+      ...prev,
       dailyCalories: 2000,
       proteinGoal: 30,
       carbGoal: 40,
       fatGoal: 30,
-      mealPlan: {
-        breakfast: true,
-        lunch: true,
-        dinner: true,
-        snacks: false,
-        snackCount: 2,
-      },
-    });
+    }));
     setCaloriesInput(2000);
     setProteinInput(30);
     setCarbsInput(40);
@@ -78,7 +72,11 @@ export default function NutritionSettings({
 
   useEffect(() => {
     if (!onRegisterAction) return;
-    onRegisterAction({ label: "Reset", icon: RotateCcw, onClick: handleReset });
+    onRegisterAction({
+      label: "Reset nutrition goals",
+      icon: RotateCcw,
+      onClick: handleReset,
+    });
     return () => onRegisterAction(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onRegisterAction]);
@@ -131,7 +129,7 @@ export default function NutritionSettings({
           </div>
           <Button variant="outline" size="sm" onClick={handleReset}>
             <RotateCcw className="mr-2 h-4 w-4" />
-            Reset
+            Reset nutrition goals
           </Button>
         </div>
       )}

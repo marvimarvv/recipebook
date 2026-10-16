@@ -67,7 +67,7 @@ export default function Home() {
 
   if (!hasCompletedOnboarding) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-background to-muted/50">
+      <div className="relative z-10 min-h-screen">
         <main className="container py-12">
           <OnboardingWizard onFinish={() => setActiveTab("generate")} />
         </main>
@@ -77,7 +77,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-background to-muted/50">
+    <div className="relative z-10 min-h-screen">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         {/* Header */}
         <header className="sticky top-5 z-50 mx-auto w-[clamp(300px,90vw,1200px)] border bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60">

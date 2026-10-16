@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Cal_Sans } from "next/font/google";
+import FoodBackground from "@/components/FoodBackground";
 import "./globals.css";
 
 const calSans = Cal_Sans({
@@ -54,8 +55,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    // Browser extensions (e.g. LanguageTool's data-lt-installed) add attributes
+    // to <html> before React hydrates; this only silences that one element.
+    <html lang="en" suppressHydrationWarning>
       <body className={`${calSans.variable} ${calSans.className} antialiased`}>
+        <FoodBackground />
         {children}
       </body>
     </html>

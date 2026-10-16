@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import { motion } from "framer-motion";
+import { RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,6 +23,7 @@ interface AdditionalSettingsProps {
 export default function AdditionalSettings({
   hideHeader,
   compact = false,
+  onRegisterAction,
 }: AdditionalSettingsProps = {}) {
   const preferences = useStore((state) => state.preferences);
   const setPreferences = useStore((state) => state.setPreferences);
@@ -60,6 +63,35 @@ export default function AdditionalSettings({
       },
     });
   };
+
+  const handleReset = () => {
+    setPreferences((prev) => ({
+      ...prev,
+      cookingLevel: "intermediate",
+      mealFrequency: 3,
+    }));
+    setNutritionSettings((prev) => ({
+      ...prev,
+      mealPlan: {
+        breakfast: true,
+        lunch: true,
+        dinner: true,
+        snacks: false,
+        snackCount: 2,
+      },
+    }));
+  };
+
+  useEffect(() => {
+    if (!onRegisterAction) return;
+    onRegisterAction({
+      label: "Reset fine-tuning",
+      icon: RotateCcw,
+      onClick: handleReset,
+    });
+    return () => onRegisterAction(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onRegisterAction]);
 
   return (
     <motion.div
