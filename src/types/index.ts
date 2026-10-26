@@ -47,6 +47,16 @@ export interface NutritionSettings {
   };
 }
 
+// The balanced macro split every user starts with.
+export const DEFAULT_MACRO_SPLIT = {
+  proteinGoal: 30,
+  carbGoal: 40,
+  fatGoal: 30,
+} as const satisfies Pick<
+  NutritionSettings,
+  "proteinGoal" | "carbGoal" | "fatGoal"
+>;
+
 // AI Generation Types
 export interface GeneratedRecipe {
   id: string;

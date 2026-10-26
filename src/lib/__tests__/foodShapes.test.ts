@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { FOOD_SHAPES, createMorphInterpolators } from "../foodShapes";
+import {
+  FOOD_SHAPES,
+  PLANT_SHAPES,
+  createMorphInterpolators,
+} from "../foodShapes";
 
 describe("foodShapes", () => {
   it("has uniquely named, closed outlines", () => {
@@ -19,5 +23,14 @@ describe("foodShapes", () => {
       expect(typeof interpolate(0.5)).toBe("string");
       expect(typeof interpolate(1)).toBe("string");
     }
+  });
+
+  it("only bursts fruit and vegetables", () => {
+    const names = PLANT_SHAPES.map((s) => s.name);
+    expect(names).not.toContain("fish");
+    expect(names).not.toContain("egg");
+    expect(names).toEqual(
+      expect.arrayContaining(["apple", "tomato", "pear", "broccoli"]),
+    );
   });
 });

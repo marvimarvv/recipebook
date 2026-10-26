@@ -16,6 +16,7 @@ import {
   useReducedMotion,
 } from "framer-motion";
 import { FOOD_SHAPES, createMorphInterpolators } from "@/lib/foodShapes";
+import { useStore } from "@/store/useStore";
 
 // Each background shape gets one of these click reactions, assigned in turn.
 type Behavior = "morph" | "burst" | "jiggle";
@@ -46,6 +47,10 @@ const SHOW_QUERY = "(min-width: 640px) and (min-height: 500px)";
 // Every shape gets its own opacity, evenly spread across this range.
 const MIN_OPACITY = 0.05;
 const MAX_OPACITY = 0.17;
+// While the Recap is open the shapes rise above its mesh gradient, turn white
+// and get this much more visible. Shapes render at the lifted opacity inside a
+// wrapper at 1 / LIFT, which CSS raises to 1 when lifted.
+const LIFT = 2.5;
 const PARTICLE_COUNT = 7;
 
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
@@ -125,6 +130,8 @@ function isEmptyBackground(el: Element) {
   // A transparent element inside a card or panel still sits on that surface,
   // so every ancestor up to <body> must be see-through as well.
   for (let node: Element | null = el; node && node !== document.body;) {
+    // The Recap's mesh gradient counts as page background.
+    if (node.hasAttribute("data-food-backdrop")) break;
     const style = getComputedStyle(node);
     if (style.backgroundImage !== "none") return false;
     const bg = style.backgroundColor;
@@ -161,7 +168,8 @@ function BackgroundShape({
   const [burstKey, setBurstKey] = useState(0);
 
   const d = useMotionValue(FOOD_SHAPES[config.food].path);
-  const glow = useMotionValue(config.opacity); // wrapper opacity, brightens on click
+  const opacity = config.opacity * LIFT;
+  const glow = useMotionValue(opacity); // wrapper opacity, brightens on click
   const presence = useMotionValue(1); // shape-only opacity, particles unaffected
   const scaleX = useMotionValue(1);
   const scaleY = useMotionValue(1);
@@ -177,7 +185,7 @@ function BackgroundShape({
   };
 
   const flash = () => {
-    animate(glow, [config.opacity, config.opacity * 2.2, config.opacity], {
+    animate(glow, [opacity, opacity * 2.2, opacity], {
       duration: 0.7,
     });
   };
@@ -359,6 +367,12 @@ function BackgroundShape({
         >
           <svg viewBox="0 0 24 24" className="h-full w-full overflow-visible">
             <motion.path d={d} ref={pathRef} fill={`url(#${gradientId})`} />
+            {/* Cross-fades in over the gradient while lifted into the Recap. */}
+            <motion.path
+              d={d}
+              fill="white"
+              className="opacity-0 transition-opacity duration-700 group-data-[lifted=true]:opacity-100"
+            />
           </svg>
         </motion.div>
         {burstKey > 0 && !reduced && (
@@ -402,6 +416,7 @@ export default function FoodBackground() {
   const interpolators = useMemo(() => createMorphInterpolators(), []);
   const registry = useRef<Registry>(new Map());
   const [popped, setPopped] = useState(0);
+  const lifted = useStore((state) => state.recapPhase !== "closed");
   const shouldShow = useSyncExternalStore(
     subscribeToShowQuery,
     getShouldShow,
@@ -436,7 +451,8 @@ export default function FoodBackground() {
     <>
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
+        data-lifted={lifted}
+        className="group pointer-events-none fixed inset-0 z-0 overflow-hidden data-[lifted=true]:z-61"
       >
         <svg width="0" height="0" className="absolute">
           <defs>
@@ -449,17 +465,20 @@ export default function FoodBackground() {
             </linearGradient>
           </defs>
         </svg>
-        {configs?.map((config) => (
-          <BackgroundShape
-            key={config.id}
-            config={config}
-            registry={registry}
-            onPop={() => setPopped((n) => n + 1)}
-            reduced={reduced}
-            gradientId={gradientId}
-            interpolators={interpolators}
-          />
-        ))}
+        {/* opacity-40 = 1 / LIFT, so unlifted shapes look as they always did. */}
+        <div className="absolute inset-0 opacity-40 transition-opacity duration-700 group-data-[lifted=true]:opacity-100">
+          {configs?.map((config) => (
+            <BackgroundShape
+              key={config.id}
+              config={config}
+              registry={registry}
+              onPop={() => setPopped((n) => n + 1)}
+              reduced={reduced}
+              gradientId={gradientId}
+              interpolators={interpolators}
+            />
+          ))}
+        </div>
         <div
           className="absolute inset-0 opacity-[0.06]"
           style={{ backgroundImage: "var(--noise-3)" }}
@@ -469,7 +488,8 @@ export default function FoodBackground() {
         <div
           role="status"
           aria-label={`${popped} ${popped === 1 ? "shape" : "shapes"} popped`}
-          className="pointer-events-none fixed left-1/2 z-40 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-full border-2 border-primary bg-white text-foreground tabular-nums"
+          data-lifted={lifted}
+          className="pointer-events-none fixed left-1/2 z-40 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-full border-2 border-primary bg-white text-foreground tabular-nums data-[lifted=true]:z-63"
           style={{ bottom: "max(1rem, env(safe-area-inset-bottom))" }}
         >
           <motion.span

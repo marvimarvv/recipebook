@@ -2,26 +2,18 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import {
-  ChefHat,
-  RotateCcw,
-  Heart,
-  Utensils,
-  Ban,
-  Plus,
-  Check,
-  ChevronDown,
-} from "lucide-react";
+import { ChefHat, RotateCcw, Heart, Utensils, Ban, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
-import {
-  getNextTarget,
-  getPrevTarget,
-  summarizeSelection,
-} from "@/lib/preferenceWizard";
+import SectionedStep, {
+  createEmptySectionProgress,
+  useSectionProgress,
+  type SectionConfig,
+  type SectionedStepNavigationProps,
+  type StepSections,
+} from "@/components/SectionedStep";
+import { summarizeSelection } from "@/lib/preferenceWizard";
 import { useStore } from "@/store/useStore";
 import {
   CUISINE_OPTIONS,
@@ -35,25 +27,6 @@ import {
 
 // Every chip group key maps 1:1 onto a UserPreferences string array.
 type PreferenceKey = "cuisines" | "diets" | "allergies" | "likes" | "dislikes";
-type CategoryKey = "cuisines" | "likes" | "dislikes" | "dietary";
-
-export interface PreferenceCardsProgress {
-  activeIndex: number;
-  // Indices of substeps that have been opened at least once (via tab, the
-  // footer button, or on load for the first substep).
-  visited: number[];
-}
-
-export function createEmptyPreferenceCardsProgress(): PreferenceCardsProgress {
-  return { activeIndex: 0, visited: [0] };
-}
-
-// The single source of truth the wizard's footer button reads from - see
-// `onFooterStateChange` below.
-export interface PreferenceFooterState {
-  next: { label: string; onClick: () => void };
-  back: { onClick: () => void } | null;
-}
 
 interface ChipGroupConfig {
   key: PreferenceKey;
@@ -65,15 +38,8 @@ interface ChipGroupConfig {
   freeTextPlaceholder?: string;
 }
 
-interface CategoryConfig {
-  key: CategoryKey;
-  title: string;
-  icon: typeof ChefHat;
+interface CategoryConfig extends SectionConfig {
   groups: ChipGroupConfig[];
-  // Optional categories are skipped by the footer and shown as a gate card
-  // on mobile, asking `prompt` until something is selected.
-  optional?: boolean;
-  prompt?: string;
 }
 
 const CATEGORIES: CategoryConfig[] = [
@@ -121,7 +87,7 @@ const CATEGORIES: CategoryConfig[] = [
     title: "Diet & allergies",
     icon: Heart,
     optional: true,
-    prompt: "Any diets or allergies?",
+    prompt: "Do you want to add any diets or allergies?",
     groups: [
       {
         key: "diets",
@@ -147,130 +113,15 @@ function getCategorySelection(
   return category.groups.flatMap((group) => preferences[group.key]);
 }
 
-interface PreferenceCategoryCardsProps extends WizardStepProps {
-  // Lifted by the wizard so Back/Next preserves position across remounts;
-  // falls back to internal state for standalone usage.
-  progress?: PreferenceCardsProgress;
-  onProgressChange?: (
-    progress:
-      | PreferenceCardsProgress
-      | ((prev: PreferenceCardsProgress) => PreferenceCardsProgress),
-  ) => void;
-  // Whether this is the wizard's very first step (so "Back" from the first
-  // substep has no main step to fall back to).
-  isFirstOverallStep?: boolean;
-  onRequestPrevStep?: () => void;
-  onRequestNextStep?: () => void;
-  // Lets the wizard's single footer button drive/reflect substep navigation.
-  onFooterStateChange?: (state: PreferenceFooterState | null) => void;
-}
-
-export default function PreferenceCategoryCards({
-  hideHeader,
-  onRegisterAction,
-  progress: progressProp,
-  onProgressChange: onProgressChangeProp,
-  isFirstOverallStep = false,
-  onRequestPrevStep,
-  onRequestNextStep,
-  onFooterStateChange,
-}: PreferenceCategoryCardsProps) {
+/**
+ * The Food preferences step's sections, shared by the wizard step and the
+ * Recap.
+ */
+export function useFoodPreferenceSections(): StepSections & {
+  getCount: (index: number) => number;
+} {
   const preferences = useStore((state) => state.preferences);
   const setPreferences = useStore((state) => state.setPreferences);
-  const [internalProgress, setInternalProgress] =
-    useState<PreferenceCardsProgress>(createEmptyPreferenceCardsProgress);
-  const progress = progressProp ?? internalProgress;
-  const onProgressChange = onProgressChangeProp ?? setInternalProgress;
-
-  const activeIndex = Math.min(
-    Math.max(progress.activeIndex, 0),
-    CATEGORIES.length - 1,
-  );
-  const activeCategory = CATEGORIES[activeIndex];
-  const visited = useMemo(() => new Set(progress.visited), [progress.visited]);
-
-  const desktopTabRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  // Pending scroll/focus target set by footer-driven navigation; the desktop
-  // tab is focused immediately (no reflow), the mobile accordion consumes it
-  // once its expand animation finishes (see MobilePreferenceAccordion below).
-  const [pendingFocusIndex, setPendingFocusIndex] = useState<number | null>(
-    null,
-  );
-
-  useEffect(() => {
-    if (pendingFocusIndex === null) return;
-    desktopTabRefs.current[pendingFocusIndex]?.focus();
-  }, [pendingFocusIndex]);
-
-  const goTo = (index: number, options?: { autoScroll?: boolean }) => {
-    onProgressChange((prev) => ({
-      activeIndex: index,
-      visited: prev.visited.includes(index)
-        ? prev.visited
-        : [...prev.visited, index],
-    }));
-    if (options?.autoScroll) setPendingFocusIndex(index);
-  };
-
-  const handleResetAll = () => {
-    setPreferences((prev) => ({
-      ...prev,
-      cuisines: [],
-      diets: [],
-      allergies: [],
-      likes: [],
-      dislikes: [],
-    }));
-    onProgressChange(createEmptyPreferenceCardsProgress());
-  };
-
-  useEffect(() => {
-    if (!onRegisterAction) return;
-    onRegisterAction({
-      label: "Reset preferences",
-      icon: RotateCcw,
-      onClick: handleResetAll,
-    });
-    return () => onRegisterAction(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onRegisterAction]);
-
-  // Single source of truth for the wizard footer button's label, target and
-  // behavior - see getNextTarget/getPrevTarget in lib/preferenceWizard.
-  useEffect(() => {
-    if (!onFooterStateChange) return;
-
-    const nextTarget = getNextTarget(CATEGORIES, activeIndex, visited);
-    const prevTarget = getPrevTarget(activeIndex);
-
-    const back: PreferenceFooterState["back"] =
-      prevTarget.type === "substep"
-        ? { onClick: () => goTo(prevTarget.index, { autoScroll: true }) }
-        : isFirstOverallStep
-          ? null
-          : { onClick: () => onRequestPrevStep?.() };
-
-    onFooterStateChange({
-      next: {
-        label: nextTarget.label,
-        onClick: () =>
-          nextTarget.type === "substep"
-            ? goTo(nextTarget.index, { autoScroll: true })
-            : onRequestNextStep?.(),
-      },
-      back,
-    });
-
-    return () => onFooterStateChange(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    onFooterStateChange,
-    activeIndex,
-    progress.visited,
-    isFirstOverallStep,
-    onRequestPrevStep,
-    onRequestNextStep,
-  ]);
 
   const toggle = (key: PreferenceKey, item: string) => {
     setPreferences((prev) => {
@@ -291,6 +142,66 @@ export default function PreferenceCategoryCards({
     });
   };
 
+  const selectionAt = (index: number) =>
+    getCategorySelection(CATEGORIES[index], preferences);
+
+  return {
+    sections: CATEGORIES,
+    renderContent: (index) => (
+      <SubstepContent
+        category={CATEGORIES[index]}
+        preferences={preferences}
+        onToggle={toggle}
+      />
+    ),
+    getSummary: (index) => summarizeSelection(selectionAt(index)),
+    hasValue: (index) => selectionAt(index).length > 0,
+    getCount: (index) => selectionAt(index).length,
+    emptyLabel: () => "None",
+  };
+}
+
+type PreferenceCategoryCardsProps = WizardStepProps &
+  SectionedStepNavigationProps;
+
+export default function PreferenceCategoryCards({
+  hideHeader,
+  onRegisterAction,
+  progress: progressProp,
+  onProgressChange: onProgressChangeProp,
+  ...navigation
+}: PreferenceCategoryCardsProps) {
+  const setPreferences = useStore((state) => state.setPreferences);
+  const { sections, renderContent, getSummary, hasValue, getCount } =
+    useFoodPreferenceSections();
+  const [progress, onProgressChange] = useSectionProgress(
+    progressProp,
+    onProgressChangeProp,
+  );
+
+  const handleResetAll = () => {
+    setPreferences((prev) => ({
+      ...prev,
+      cuisines: [],
+      diets: [],
+      allergies: [],
+      likes: [],
+      dislikes: [],
+    }));
+    onProgressChange(createEmptySectionProgress());
+  };
+
+  useEffect(() => {
+    if (!onRegisterAction) return;
+    onRegisterAction({
+      label: "Reset preferences",
+      icon: RotateCcw,
+      onClick: handleResetAll,
+    });
+    return () => onRegisterAction(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onRegisterAction]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -306,113 +217,20 @@ export default function PreferenceCategoryCards({
         </div>
       )}
 
-      {/* Desktop: tabs + single active card. Free navigation is optional -
-          the footer button remains the primary way to advance. */}
-      <div className="hidden space-y-6 md:block">
-        <div
-          role="tablist"
-          aria-label="Preference categories"
-          className="flex flex-wrap gap-2"
-        >
-          {CATEGORIES.map((category, index) => {
-            const count = getCategorySelection(category, preferences).length;
-            const isVisited = visited.has(index);
-            const isActive = index === activeIndex;
-            return (
-              <Button
-                key={category.key}
-                ref={(el) => {
-                  desktopTabRefs.current[index] = el;
-                }}
-                role="tab"
-                id={`preference-tab-${category.key}`}
-                aria-selected={isActive}
-                aria-controls={`preference-tabpanel-${category.key}`}
-                tabIndex={isActive ? 0 : -1}
-                variant={isActive ? "default" : "outline"}
-                size="sm"
-                className={cn(
-                  category.optional && !isActive && "border-dashed",
-                )}
-                onClick={() => goTo(index)}
-              >
-                {isVisited && <Check className="mr-1.5 h-3.5 w-3.5" />}
-                {category.title}
-                {count > 0 ? (
-                  <span className="ml-1.5 opacity-70">{count}</span>
-                ) : (
-                  category.optional && (
-                    <span className="ml-1.5 text-xs opacity-60">Optional</span>
-                  )
-                )}
-              </Button>
-            );
-          })}
-        </div>
-
-        <div
-          role="tabpanel"
-          id={`preference-tabpanel-${activeCategory.key}`}
-          aria-labelledby={`preference-tab-${activeCategory.key}`}
-        >
-          <AnimatePresence mode="wait">
-            <ActiveCategoryCard
-              key={activeCategory.key}
-              category={activeCategory}
-              preferences={preferences}
-              onToggle={toggle}
-            />
-          </AnimatePresence>
-        </div>
-      </div>
-
-      {/* Mobile: summary accordion, exactly one section open at all times. */}
-      <MobilePreferenceAccordion
-        activeIndex={activeIndex}
-        visited={visited}
-        preferences={preferences}
-        onToggle={toggle}
-        onOpenSection={(index) => goTo(index)}
-        pendingFocusIndex={pendingFocusIndex}
-        onPendingFocusHandled={() => setPendingFocusIndex(null)}
+      <SectionedStep
+        {...navigation}
+        progress={progress}
+        onProgressChange={onProgressChange}
+        idPrefix="preference"
+        ariaLabel="Preference categories"
+        sections={sections}
+        renderContent={renderContent}
+        getSummary={getSummary}
+        hasValue={hasValue}
+        getCount={getCount}
+        nextStepLabel="Continue to Step 2"
+        optInNoLabel="No, go to step 2"
       />
-    </motion.div>
-  );
-}
-
-function ActiveCategoryCard({
-  category,
-  preferences,
-  onToggle,
-}: {
-  category: CategoryConfig;
-  preferences: UserPreferences;
-  onToggle: (key: PreferenceKey, item: string) => void;
-}) {
-  const CategoryIcon = category.icon;
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.2 }}
-    >
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <CategoryIcon className="h-6 w-6 text-primary" />
-            <CardTitle>{category.title}</CardTitle>
-            {category.optional && <Badge variant="outline">Optional</Badge>}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <SubstepContent
-            category={category}
-            preferences={preferences}
-            onToggle={onToggle}
-          />
-        </CardContent>
-      </Card>
     </motion.div>
   );
 }
@@ -446,154 +264,6 @@ function SubstepContent({
           />
         </div>
       ))}
-    </div>
-  );
-}
-
-function MobilePreferenceAccordion({
-  activeIndex,
-  visited,
-  preferences,
-  onToggle,
-  onOpenSection,
-  pendingFocusIndex,
-  onPendingFocusHandled,
-}: {
-  activeIndex: number;
-  visited: Set<number>;
-  preferences: UserPreferences;
-  onToggle: (key: PreferenceKey, item: string) => void;
-  onOpenSection: (index: number) => void;
-  pendingFocusIndex: number | null;
-  onPendingFocusHandled: () => void;
-}) {
-  const prefersReducedMotion = useReducedMotion();
-  const headerRefs = useRef<Array<HTMLButtonElement | null>>([]);
-
-  const scrollAndFocus = (index: number) => {
-    if (pendingFocusIndex !== index) return;
-    const header = headerRefs.current[index];
-    if (header) {
-      // The header's scroll-margin keeps it off the top edge.
-      header.scrollIntoView({
-        block: "start",
-        behavior: prefersReducedMotion ? "auto" : "smooth",
-      });
-      header.focus({ preventScroll: true });
-    }
-    onPendingFocusHandled();
-  };
-
-  return (
-    <div className="space-y-3 md:hidden">
-      {CATEGORIES.map((category, index) => {
-        const isOpen = index === activeIndex;
-        const isVisited = visited.has(index);
-        const summary = summarizeSelection(
-          getCategorySelection(category, preferences),
-        );
-        // Closed and still empty, an optional category reads as a question
-        // the user can opt into rather than a section they must fill.
-        const isGate = category.optional && !isOpen && !summary;
-        const headerId = `preference-accordion-header-${category.key}`;
-        const panelId = `preference-accordion-panel-${category.key}`;
-        const CategoryIcon = category.icon;
-
-        return (
-          <div
-            key={category.key}
-            className={cn(
-              "rounded-xl border bg-card transition-[scale,box-shadow] duration-300 motion-reduce:transition-none",
-              isOpen &&
-                "preference-active-border scale-[1.01] shadow-md shadow-primary/10",
-              category.optional &&
-                !isOpen &&
-                "border-dashed border-muted-foreground/40 bg-transparent",
-            )}
-          >
-            <button
-              ref={(el) => {
-                headerRefs.current[index] = el;
-              }}
-              id={headerId}
-              type="button"
-              aria-expanded={isOpen}
-              aria-controls={panelId}
-              onClick={() => {
-                if (!isOpen) onOpenSection(index);
-              }}
-              className="flex w-full scroll-mt-4 items-center gap-3 px-4 py-3 text-left"
-            >
-              <CategoryIcon
-                className={cn(
-                  "h-5 w-5 shrink-0",
-                  isGate ? "text-muted-foreground" : "text-primary",
-                )}
-              />
-              <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-1.5 font-medium">
-                  {isVisited && !isGate && (
-                    <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
-                  )}
-                  <span className="truncate">
-                    {isGate ? category.prompt : category.title}
-                  </span>
-                </span>
-                <span className="block truncate text-xs text-muted-foreground">
-                  {summary ??
-                    (category.optional
-                      ? "Optional"
-                      : isVisited
-                        ? "Nothing selected"
-                        : "Not yet")}
-                </span>
-              </span>
-              {isGate ? (
-                <span className="flex shrink-0 items-center gap-1 rounded-full border border-dashed border-primary/50 px-2.5 py-1 text-xs font-medium text-primary">
-                  <Plus className="h-3 w-3" />
-                  Add
-                </span>
-              ) : (
-                <ChevronDown
-                  className={cn(
-                    "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
-                    isOpen && "rotate-180",
-                  )}
-                />
-              )}
-            </button>
-            <AnimatePresence initial={false}>
-              {isOpen && (
-                <motion.div
-                  key="content"
-                  id={panelId}
-                  role="region"
-                  aria-labelledby={headerId}
-                  // Clip only while expanding/collapsing so chip emoji
-                  // bursts can rise past the panel edge once it's open.
-                  initial={{ height: 0, opacity: 0, overflow: "hidden" }}
-                  animate={{
-                    height: "auto",
-                    opacity: 1,
-                    transitionEnd: { overflow: "visible" },
-                  }}
-                  exit={{ height: 0, opacity: 0, overflow: "hidden" }}
-                  transition={{ duration: prefersReducedMotion ? 0 : 0.25 }}
-                  onAnimationComplete={() => scrollAndFocus(index)}
-                >
-                  <div className="px-4 pt-1 pb-4">
-                    <SubstepContent
-                      category={category}
-                      preferences={preferences}
-                      onToggle={onToggle}
-                    />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        );
-      })}
     </div>
   );
 }

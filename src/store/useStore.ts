@@ -8,8 +8,10 @@ import {
   MealPlan,
   WeekMealPlan,
   ToastMessage,
+  DEFAULT_MACRO_SPLIT,
 } from "@/types";
 import type { GenerationOptions } from "@/lib/mistral";
+import { nextRecapPhase, type RecapEvent, type RecapPhase } from "@/lib/recap";
 
 export type GenerationStatus = "idle" | "generating" | "success" | "error";
 
@@ -76,6 +78,11 @@ interface AppState {
   setGenerationError: (error: string) => void;
   resetGeneration: () => void;
 
+  // Recap (the overview the week is generated from at the end of the
+  // wizard). Read by the background shapes too, which rise into it.
+  recapPhase: RecapPhase;
+  dispatchRecap: (event: RecapEvent) => void;
+
   // Toast Messages
   toasts: ToastMessage[];
   addToast: (toast: Omit<ToastMessage, "id">) => void;
@@ -97,9 +104,7 @@ const defaultPreferences: UserPreferences = {
 
 const defaultNutritionSettings: NutritionSettings = {
   dailyCalories: 2000,
-  proteinGoal: 30,
-  carbGoal: 40,
-  fatGoal: 30,
+  ...DEFAULT_MACRO_SPLIT,
   mealPlan: {
     breakfast: true,
     lunch: true,
@@ -231,6 +236,13 @@ export const useStore = create<AppState>()(
         })),
       resetGeneration: () => set({ generation: defaultGenerationState }),
 
+      // Recap (not persisted - always starts closed)
+      recapPhase: "closed",
+      dispatchRecap: (event: RecapEvent) =>
+        set((state) => ({
+          recapPhase: nextRecapPhase(state.recapPhase, event),
+        })),
+
       // Toast Messages
       toasts: [] as ToastMessage[],
       addToast: (toast: Omit<ToastMessage, "id">) =>
@@ -252,6 +264,7 @@ export const useStore = create<AppState>()(
           mealPlans: [] as MealPlan[],
           weekMealPlans: [] as WeekMealPlan[],
           generation: defaultGenerationState,
+          recapPhase: "closed",
           toasts: [] as ToastMessage[],
         }),
     }),

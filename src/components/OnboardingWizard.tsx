@@ -16,16 +16,15 @@ import {
 import { HoverArrowCursor } from "@/components/ui/hover-arrow-cursor";
 import { FitText } from "@/components/ui/fit-text";
 import { Progress } from "@/components/ui/progress";
-import PreferenceCategoryCards, {
-  createEmptyPreferenceCardsProgress,
-  type PreferenceCardsProgress,
-  type PreferenceFooterState,
-} from "@/components/PreferenceCategoryCards";
-import NutritionSettings from "@/components/NutritionSettings";
-import AdditionalSettings from "@/components/AdditionalSettings";
+import PreferenceCategoryCards from "@/components/PreferenceCategoryCards";
+import NutritionSections from "@/components/NutritionSections";
+import {
+  createEmptySectionProgress,
+  type SectionFooterState,
+  type SectionProgress,
+} from "@/components/SectionedStep";
+import AdditionalSections from "@/components/AdditionalSections";
 import { useStore } from "@/store/useStore";
-import { useMealPlanGeneration } from "@/hooks/useMealPlanGeneration";
-import { checkMistralAPI } from "@/lib/mistral";
 import { StepHeaderAction } from "@/types";
 
 interface OnboardingWizardProps {
@@ -36,17 +35,14 @@ const STEPS = [
   {
     key: "preferences",
     title: "Tell us your food preferences",
-    Component: PreferenceCategoryCards,
   },
   {
     key: "nutrition",
     title: "Set your nutrition goals",
-    Component: NutritionSettings,
   },
   {
     key: "additional",
     title: "Fine-tune your recipe experience",
-    Component: AdditionalSettings,
   },
 ] as const;
 
@@ -55,15 +51,25 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
   const [headerAction, setHeaderAction] = useState<StepHeaderAction | null>(
     null,
   );
-  const [preferenceProgress, setPreferenceProgress] =
-    useState<PreferenceCardsProgress>(createEmptyPreferenceCardsProgress);
+  const [preferenceProgress, setPreferenceProgress] = useState<SectionProgress>(
+    createEmptySectionProgress,
+  );
   const [preferenceFooter, setPreferenceFooter] =
-    useState<PreferenceFooterState | null>(null);
+    useState<SectionFooterState | null>(null);
+  const [nutritionProgress, setNutritionProgress] = useState<SectionProgress>(
+    createEmptySectionProgress,
+  );
+  const [nutritionFooter, setNutritionFooter] =
+    useState<SectionFooterState | null>(null);
+  const [fineTuneProgress, setFineTuneProgress] = useState<SectionProgress>(
+    createEmptySectionProgress,
+  );
+  const [fineTuneFooter, setFineTuneFooter] =
+    useState<SectionFooterState | null>(null);
   const [showMacroWarning, setShowMacroWarning] = useState(false);
   const completeOnboarding = useStore((state) => state.completeOnboarding);
-  const startGeneration = useStore((state) => state.startGeneration);
+  const dispatchRecap = useStore((state) => state.dispatchRecap);
   const nutritionSettings = useStore((state) => state.nutritionSettings);
-  const { generateWeek } = useMealPlanGeneration();
 
   const registerHeaderAction = useCallback(
     (action: StepHeaderAction | null) => setHeaderAction(action),
@@ -78,9 +84,12 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
     nutritionSettings.carbGoal +
     nutritionSettings.fatGoal;
 
-  // Step 1 (preferences) drives its own footer label/target via
-  // onFooterStateChange - every other step keeps the plain Back/Next pair.
-  const activeFooter = step === 0 ? preferenceFooter : null;
+  // Every step is sectioned and drives the footer's label/target via
+  // onFooterStateChange; the plain Back/Next pair is only a fallback until
+  // the step has reported its footer state.
+  const activeFooter = [preferenceFooter, nutritionFooter, fineTuneFooter][
+    step
+  ];
   const showBackButton = activeFooter
     ? activeFooter.back !== null
     : !isFirstStep;
@@ -91,13 +100,13 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
     onFinish();
   };
 
-  // Memoized: passed down to PreferenceCategoryCards as onRequestPrevStep/
+  // Memoized: passed down to the sectioned steps as onRequestPrevStep/
   // onRequestNextStep, which are effect dependencies there - unstable
   // identities would re-trigger that effect (and its onFooterStateChange
   // call) on every render, looping forever.
   const handleBack = useCallback(() => setStep((s) => Math.max(0, s - 1)), []);
 
-  const handleNext = useCallback(async () => {
+  const handleNext = useCallback(() => {
     if (current.key === "nutrition" && macroTotal !== 100) {
       setShowMacroWarning(true);
       return;
@@ -108,26 +117,9 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
       return;
     }
 
-    // Final step: kick off generation, complete onboarding, and hand off to
-    // the Generate tab immediately - it shares generation state via the
-    // store, so it will pick up the in-progress/completed plan there.
-    completeOnboarding();
-    onFinish();
-    startGeneration(7); // immediate "generating" feedback on the Generate tab
-
-    const useAI = await checkMistralAPI();
-    void generateWeek(useAI);
-  }, [
-    current.key,
-    macroTotal,
-    isLastStep,
-    completeOnboarding,
-    onFinish,
-    startGeneration,
-    generateWeek,
-  ]);
-
-  const CurrentComponent = current.Component;
+    // Final step: open the Recap, the week is generated from there.
+    dispatchRecap("open");
+  }, [current.key, macroTotal, isLastStep, dispatchRecap]);
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -201,10 +193,27 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
               onRequestNextStep={handleNext}
               onFooterStateChange={setPreferenceFooter}
             />
-          ) : (
-            <CurrentComponent
+          ) : step === 1 ? (
+            <NutritionSections
               hideHeader
               onRegisterAction={registerHeaderAction}
+              progress={nutritionProgress}
+              onProgressChange={setNutritionProgress}
+              isFirstOverallStep={isFirstStep}
+              onRequestPrevStep={handleBack}
+              onRequestNextStep={handleNext}
+              onFooterStateChange={setNutritionFooter}
+            />
+          ) : (
+            <AdditionalSections
+              hideHeader
+              onRegisterAction={registerHeaderAction}
+              progress={fineTuneProgress}
+              onProgressChange={setFineTuneProgress}
+              isFirstOverallStep={isFirstStep}
+              onRequestPrevStep={handleBack}
+              onRequestNextStep={handleNext}
+              onFooterStateChange={setFineTuneFooter}
             />
           )}
         </motion.div>
@@ -224,7 +233,13 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
         ) : (
           <span />
         )}
-        {isLastStep ? (
+        {/* The last step's final button opens the Recap, so it gets its own
+            look once the step's sections are done (or before it reports).
+            While its opt-in prompt asks about snacks, the prompt's answers
+            are the way forward. */}
+        {isLastStep && activeFooter?.awaitingOptIn ? (
+          <span />
+        ) : isLastStep && (activeFooter?.next.leavesStep ?? true) ? (
           <Button onClick={handleNext}>
             <Sparkles className="mr-2 h-4 w-4" />
             Generate My Week

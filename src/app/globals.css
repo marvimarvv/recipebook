@@ -241,11 +241,7 @@
 .preference-active-border {
   border: 2px solid transparent;
   background:
-    linear-gradient(
-        color-mix(in oklab, var(--color-primary) 5%, var(--color-card)),
-        color-mix(in oklab, var(--color-primary) 5%, var(--color-card))
-      )
-      padding-box,
+    linear-gradient(var(--color-card), var(--color-card)) padding-box,
     conic-gradient(
         from var(--border-angle),
         var(--color-primary),
@@ -259,6 +255,67 @@
 
 @media (prefers-reduced-motion: reduce) {
   .preference-active-border {
+    animation: none;
+  }
+}
+
+/* Recap: soft theme-colored blobs slowly drifting behind the overview. Each
+   blob sets its own --mesh-dx/--mesh-dy/--mesh-duration/--mesh-delay. */
+@keyframes mesh-drift {
+  0%,
+  100% {
+    translate: 0 0;
+    scale: 1;
+  }
+  33% {
+    translate: var(--mesh-dx) var(--mesh-dy);
+    scale: 1.12;
+  }
+  66% {
+    translate: calc(var(--mesh-dx) * -0.6) calc(var(--mesh-dy) * 0.8);
+    scale: 0.94;
+  }
+}
+
+.mesh-blob {
+  animation: mesh-drift var(--mesh-duration, 24s) ease-in-out
+    var(--mesh-delay, 0s) infinite;
+}
+
+/* Recap: fruit and vegetables flying out of "Generate My Week" - up and out,
+   then falling away. Each piece sets --burst-dx/--burst-dy/--burst-rot and
+   --burst-delay. */
+@keyframes food-burst {
+  0% {
+    translate: 0 0;
+    rotate: 0deg;
+    scale: 0.3;
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  60% {
+    translate: var(--burst-dx) var(--burst-dy);
+    scale: 1;
+    opacity: 1;
+  }
+  100% {
+    translate: calc(var(--burst-dx) * 1.2) calc(var(--burst-dy) + 80px);
+    rotate: var(--burst-rot);
+    scale: 0.9;
+    opacity: 0;
+  }
+}
+
+.food-burst-piece {
+  animation: food-burst 1.2s cubic-bezier(0.2, 0.7, 0.3, 1)
+    var(--burst-delay, 0s) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mesh-blob,
+  .food-burst-piece {
     animation: none;
   }
 }

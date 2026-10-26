@@ -15,8 +15,16 @@ const HOLD_SECONDS = 0.5;
 const MORPH_SECONDS = 0.6;
 const CYCLE_SECONDS = HOLD_SECONDS + MORPH_SECONDS;
 
-export default function FoodMorphLoader() {
+// "primary" sits on the Recap's mesh gradient, where the theme gradient would
+// blend into the background.
+export default function FoodMorphLoader({
+  tone = "gradient",
+}: {
+  tone?: "gradient" | "primary";
+}) {
   const gradientId = useId();
+  const fill =
+    tone === "primary" ? "hsl(var(--primary))" : `url(#${gradientId})`;
   const prefersReducedMotion = useReducedMotion();
   const d = useMotionValue(FOOD_SHAPES[0].path);
   const [staticIndex, setStaticIndex] = useState(0);
@@ -65,7 +73,13 @@ export default function FoodMorphLoader() {
       aria-label="Generating meal plan"
       className="relative mx-auto mb-6 h-24 w-24"
     >
-      <div className="absolute inset-2 rounded-full bg-linear-to-br from-primary/30 to-secondary/30 blur-xl" />
+      <div
+        className={
+          tone === "primary"
+            ? "absolute inset-2 rounded-full bg-white/50 blur-xl"
+            : "absolute inset-2 rounded-full bg-linear-to-br from-primary/30 to-secondary/30 blur-xl"
+        }
+      />
       <svg viewBox="0 0 24 24" className="relative h-full w-full">
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
@@ -81,7 +95,7 @@ export default function FoodMorphLoader() {
             <motion.path
               key={FOOD_SHAPES[staticIndex].name}
               d={FOOD_SHAPES[staticIndex].path}
-              fill={`url(#${gradientId})`}
+              fill={fill}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -99,7 +113,7 @@ export default function FoodMorphLoader() {
               ease: "easeInOut",
             }}
           >
-            <motion.path d={d} fill={`url(#${gradientId})`} />
+            <motion.path d={d} fill={fill} />
           </motion.g>
         )}
       </svg>

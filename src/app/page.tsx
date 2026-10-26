@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import AIRecipeGenerator from "@/components/AIRecipeGenerator";
 import OnboardingWizard from "@/components/OnboardingWizard";
+import Recap from "@/components/Recap";
 import Toast from "@/components/Toast";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import SplashScreen from "@/components/SplashScreen";
@@ -60,111 +61,124 @@ export default function Home() {
     (state) => state.hasCompletedOnboarding,
   );
   const restartOnboarding = useStore((state) => state.restartOnboarding);
+  const recapOpen = useStore((state) => state.recapPhase !== "closed");
 
   if (!hasHydrated) {
     return <SplashScreen />;
   }
 
+  // Both branches keep the Recap at the same position so it survives the
+  // switch from the wizard to the meal plan, which happens behind it.
+  const recap = <Recap onFinish={() => setActiveTab("generate")} />;
+
   if (!hasCompletedOnboarding) {
     return (
-      <div className="relative z-10 min-h-screen">
-        <main className="container py-12">
-          <OnboardingWizard onFinish={() => setActiveTab("generate")} />
-        </main>
-        <Toast />
-      </div>
+      <>
+        <div className="relative z-10 min-h-screen" inert={recapOpen}>
+          <main className="container py-12">
+            <OnboardingWizard onFinish={() => setActiveTab("generate")} />
+          </main>
+          <Toast />
+        </div>
+        {recap}
+      </>
     );
   }
 
   return (
-    <div className="relative z-10 min-h-screen">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        {/* Header */}
-        <header className="sticky top-5 z-50 mx-auto w-[clamp(300px,90vw,1200px)] border bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
-          <div className="container flex h-16 items-center gap-6">
-            <div className="hidden items-center gap-2 sm:flex">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary">
-                <Utensils className="h-5 w-5 text-primary-foreground" />
+    <>
+      <div className="relative z-10 min-h-screen" inert={recapOpen}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          {/* Header */}
+          <header className="sticky top-5 z-50 mx-auto w-[clamp(300px,90vw,1200px)] border bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
+            <div className="container flex h-16 items-center gap-6">
+              <div className="hidden items-center gap-2 sm:flex">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary">
+                  <Utensils className="h-5 w-5 text-primary-foreground" />
+                </div>
+                <span className="text-xl font-bold">RecipeBook</span>
               </div>
-              <span className="text-xl font-bold">RecipeBook</span>
+              <nav className="flex flex-1 items-center">
+                <TabsList className="flex w-full bg-transparent p-0">
+                  <TabsTrigger
+                    value="generate"
+                    className="flex flex-1 items-center justify-center gap-2"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    <span>My Meal Plan</span>
+                  </TabsTrigger>
+                </TabsList>
+              </nav>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="sm" className="shrink-0">
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    <span className="hidden sm:inline">Restart setup</span>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Restart the setup wizard?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This walks you through Preferences and Nutrition again and
+                      generates a new week when you finish. Your existing meal
+                      plans won&apos;t be deleted.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => restartOnboarding()}>
+                      Restart
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
-            <nav className="flex flex-1 items-center">
-              <TabsList className="flex w-full bg-transparent p-0">
-                <TabsTrigger
-                  value="generate"
-                  className="flex flex-1 items-center justify-center gap-2"
-                >
-                  <Sparkles className="h-4 w-4" />
-                  <span>My Meal Plan</span>
-                </TabsTrigger>
-              </TabsList>
-            </nav>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="shrink-0">
-                  <RotateCcw className="mr-2 h-4 w-4" />
-                  <span className="hidden sm:inline">Restart setup</span>
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Restart the setup wizard?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This walks you through Preferences and Nutrition again and
-                    generates a new week when you finish. Your existing meal
-                    plans won&apos;t be deleted.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => restartOnboarding()}>
-                    Restart
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+          </header>
+
+          <div className="-mt-21">
+            <HeroScene />
           </div>
-        </header>
 
-        <div className="-mt-21">
-          <HeroScene />
-        </div>
+          <main className="container py-8">
+            {/* Main Content Tabs */}
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+            >
+              <TabsContent value="generate">
+                <AIRecipeGenerator />
+              </TabsContent>
+            </motion.div>
+          </main>
+        </Tabs>
 
-        <main className="container py-8">
-          {/* Main Content Tabs */}
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-          >
-            <TabsContent value="generate">
-              <AIRecipeGenerator />
-            </TabsContent>
-          </motion.div>
-        </main>
-      </Tabs>
+        {/* Floating illustrations */}
+        <motion.div
+          className="pointer-events-none fixed bottom-10 left-10 z-0 h-16 w-16 opacity-10"
+          animate={{ y: [0, -10, 0], rotate: [0, 5, -5, 0] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <div className="h-full w-full rounded-full bg-linear-to-br from-primary to-secondary" />
+        </motion.div>
+        <motion.div
+          className="pointer-events-none fixed top-20 right-20 z-0 h-12 w-12 opacity-10"
+          animate={{ y: [0, 10, 0], rotate: [0, -5, 5, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <div className="h-full w-full rounded-full bg-linear-to-br from-accent to-primary" />
+        </motion.div>
 
-      {/* Floating illustrations */}
-      <motion.div
-        className="pointer-events-none fixed bottom-10 left-10 z-0 h-16 w-16 opacity-10"
-        animate={{ y: [0, -10, 0], rotate: [0, 5, -5, 0] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-      >
-        <div className="h-full w-full rounded-full bg-linear-to-br from-primary to-secondary" />
-      </motion.div>
-      <motion.div
-        className="pointer-events-none fixed top-20 right-20 z-0 h-12 w-12 opacity-10"
-        animate={{ y: [0, 10, 0], rotate: [0, -5, 5, 0] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-      >
-        <div className="h-full w-full rounded-full bg-linear-to-br from-accent to-primary" />
-      </motion.div>
-
-      {/* Toast Notifications */}
-      <Toast />
-      <PWAInstallPrompt />
-    </div>
+        {/* Toast Notifications */}
+        <Toast />
+        <PWAInstallPrompt />
+      </div>
+      {recap}
+    </>
   );
 }
