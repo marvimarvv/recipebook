@@ -7,10 +7,9 @@ import {
 
 const SUBSTEPS = [
   { title: "Cuisines" },
-  { title: "Diets" },
-  { title: "Allergies" },
   { title: "Foods you love" },
   { title: "Foods to avoid" },
+  { title: "Diet & allergies", optional: true },
 ];
 
 describe("getNextTarget", () => {
@@ -19,27 +18,32 @@ describe("getNextTarget", () => {
     expect(target).toEqual({
       type: "substep",
       index: 1,
-      label: "Next: Diets",
-    });
-  });
-
-  it("skips substeps that were already visited (e.g. via a tab jump)", () => {
-    const target = getNextTarget(SUBSTEPS, 0, new Set([0, 1, 2]));
-    expect(target).toEqual({
-      type: "substep",
-      index: 3,
       label: "Next: Foods you love",
     });
   });
 
+  it("skips substeps that were already visited (e.g. via a tab jump)", () => {
+    const target = getNextTarget(SUBSTEPS, 0, new Set([0, 1]));
+    expect(target).toEqual({
+      type: "substep",
+      index: 2,
+      label: "Next: Foods to avoid",
+    });
+  });
+
   it("continues to the next main step once every later substep is visited, without looping back", () => {
-    // Substeps 0 and 1 are unvisited, but they're *before* currentIndex, so
-    // they must never be offered again.
-    const target = getNextTarget(SUBSTEPS, 2, new Set([2, 3, 4]));
+    // Substep 0 is unvisited, but it's *before* currentIndex, so it must
+    // never be offered again.
+    const target = getNextTarget(SUBSTEPS, 1, new Set([1, 2]));
     expect(target).toEqual({ type: "nextStep", label: "Continue to Step 2" });
   });
 
-  it("continues to the next main step when jumping straight to the last substep", () => {
+  it("skips an unvisited optional substep and continues to the next main step", () => {
+    const target = getNextTarget(SUBSTEPS, 2, new Set([0, 1, 2]));
+    expect(target).toEqual({ type: "nextStep", label: "Continue to Step 2" });
+  });
+
+  it("continues to the next main step from inside the optional substep", () => {
     const lastIndex = SUBSTEPS.length - 1;
     const target = getNextTarget(SUBSTEPS, lastIndex, new Set([lastIndex]));
     expect(target).toEqual({ type: "nextStep", label: "Continue to Step 2" });

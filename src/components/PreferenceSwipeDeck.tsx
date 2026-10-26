@@ -80,19 +80,13 @@ interface DeckConfig {
   freeTextPlaceholder: string;
 }
 
-// Cuisines already overlap with the diet options (Vegetarian, Vegan, Keto, Paleo);
-// those are asked about once, in the diets deck.
-const CUISINE_DECK_OPTIONS = CUISINE_OPTIONS.filter(
-  (option) => !["Vegetarian", "Vegan", "Keto", "Paleo"].includes(option),
-);
-
 const DECKS: DeckConfig[] = [
   {
     key: "cuisines",
     title: "Cuisines",
     subtitle: "Swipe right for cuisines you love, left to skip.",
     icon: ChefHat,
-    options: CUISINE_DECK_OPTIONS,
+    options: CUISINE_OPTIONS,
     rightLabel: "Love it",
     leftLabel: "Skip",
     freeTextLabel: "Any other cuisines you love?",

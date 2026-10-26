@@ -137,19 +137,17 @@ export const CUISINE_OPTIONS = [
   "Italian",
   "Mexican",
   "Chinese",
-  "Indian",
   "Japanese",
+  "Indian",
+  "Thai",
   "Mediterranean",
+  "Greek",
+  "Korean",
+  "Vietnamese",
+  "Middle Eastern",
   "American",
   "French",
-  "Thai",
-  "Greek",
   "Spanish",
-  "Middle Eastern",
-  "Vegetarian",
-  "Vegan",
-  "Keto",
-  "Paleo",
 ];
 
 export const DIET_OPTIONS = [
@@ -157,13 +155,9 @@ export const DIET_OPTIONS = [
   "Vegetarian",
   "Vegan",
   "Pescatarian",
-  "Keto",
-  "Paleo",
   "Low Carb",
-  "Low Fat",
-  "Gluten Free",
-  "Dairy Free",
-  "Nut Free",
+  "Keto",
+  "Halal",
 ];
 
 export const ALLERGY_OPTIONS = [
@@ -176,11 +170,11 @@ export const ALLERGY_OPTIONS = [
   "Shellfish",
   "Fish",
   "Soy",
-  "Wheat",
   "Sesame",
 ];
 
-export const FOOD_OPTIONS = [
+// Staples and crowd-pleasers people most often want more of.
+export const LIKE_OPTIONS = [
   "Chicken",
   "Beef",
   "Pork",
@@ -188,20 +182,40 @@ export const FOOD_OPTIONS = [
   "Shrimp",
   "Tofu",
   "Eggs",
+  "Cheese",
+  "Pasta",
+  "Rice",
+  "Potatoes",
+  "Avocado",
   "Mushrooms",
   "Broccoli",
-  "Avocado",
-  "Sweet Potato",
   "Chickpeas",
   "Spicy Food",
+];
+
+// The most polarizing foods - the ones people most often reject.
+export const DISLIKE_OPTIONS = [
+  "Mushrooms",
   "Cilantro",
   "Olives",
   "Blue Cheese",
+  "Anchovies",
+  "Liver",
   "Eggplant",
-  "Kale",
-  "Pasta",
-  "Rice",
+  "Brussels Sprouts",
+  "Beets",
+  "Celery",
+  "Raw Onion",
+  "Tofu",
+  "Coconut",
+  "Pork",
+  "Seafood",
+  "Spicy Food",
 ];
+
+export const FOOD_OPTIONS = Array.from(
+  new Set([...LIKE_OPTIONS, ...DISLIKE_OPTIONS]),
+);
 
 export const COOKING_LEVEL_OPTIONS = [
   "beginner",

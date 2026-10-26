@@ -6,8 +6,11 @@ import { cn } from "@/lib/utils";
 
 const Progress = React.forwardRef<
   React.ElementRef<typeof ProgressPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root>
->(({ className, value, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root> & {
+    // Rendered at the end of the filled part, so it moves with the progress.
+    label?: React.ReactNode;
+  }
+>(({ className, value, label, ...props }, ref) => (
   <ProgressPrimitive.Root
     ref={ref}
     className={cn(
@@ -17,9 +20,15 @@ const Progress = React.forwardRef<
     {...props}
   >
     <ProgressPrimitive.Indicator
-      className="h-full w-full flex-1 bg-primary transition-transform duration-300 ease-in-out"
+      className="relative h-full w-full flex-1 rounded-full bg-primary transition-transform duration-300 ease-in-out"
       style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
-    />
+    >
+      {label && (
+        <span className="absolute inset-y-0 right-2.5 flex items-center text-xs font-medium whitespace-nowrap text-primary-foreground">
+          {label}
+        </span>
+      )}
+    </ProgressPrimitive.Indicator>
   </ProgressPrimitive.Root>
 ));
 Progress.displayName = ProgressPrimitive.Root.displayName;

@@ -4,6 +4,8 @@
 
 export interface SubstepMeta {
   title: string;
+  // Optional substeps are offered but never part of the footer's guided path.
+  optional?: boolean;
 }
 
 export type FooterNextTarget =
@@ -14,10 +16,10 @@ export type FooterBackTarget =
   { type: "substep"; index: number } | { type: "prevStep" };
 
 /**
- * The footer button's destination: the next unvisited substep after
- * `currentIndex`, in config order. If everything after `currentIndex` has
- * already been visited, the destination is the wizard's next main step -
- * we never loop back to an earlier unvisited substep.
+ * The footer button's destination: the next unvisited, non-optional substep
+ * after `currentIndex`, in config order. If there is none, the destination is
+ * the wizard's next main step - we never loop back to an earlier unvisited
+ * substep, and optional substeps are only reached by opening them directly.
  */
 export function getNextTarget<T extends SubstepMeta>(
   substeps: readonly T[],
@@ -25,7 +27,7 @@ export function getNextTarget<T extends SubstepMeta>(
   visited: ReadonlySet<number>,
 ): FooterNextTarget {
   for (let index = currentIndex + 1; index < substeps.length; index++) {
-    if (!visited.has(index)) {
+    if (!visited.has(index) && !substeps[index].optional) {
       return {
         type: "substep",
         index,

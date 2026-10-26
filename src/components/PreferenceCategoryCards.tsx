@@ -6,7 +6,6 @@ import {
   ChefHat,
   RotateCcw,
   Heart,
-  AlertCircle,
   Utensils,
   Ban,
   Plus,
@@ -14,13 +13,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -34,13 +27,15 @@ import {
   CUISINE_OPTIONS,
   DIET_OPTIONS,
   ALLERGY_OPTIONS,
-  FOOD_OPTIONS,
+  LIKE_OPTIONS,
+  DISLIKE_OPTIONS,
   UserPreferences,
   WizardStepProps,
 } from "@/types";
 
-// Every category key maps 1:1 onto a UserPreferences string array.
-type CategoryKey = "cuisines" | "diets" | "allergies" | "likes" | "dislikes";
+// Every chip group key maps 1:1 onto a UserPreferences string array.
+type PreferenceKey = "cuisines" | "diets" | "allergies" | "likes" | "dislikes";
+type CategoryKey = "cuisines" | "likes" | "dislikes" | "dietary";
 
 export interface PreferenceCardsProgress {
   activeIndex: number;
@@ -60,69 +55,97 @@ export interface PreferenceFooterState {
   back: { onClick: () => void } | null;
 }
 
+interface ChipGroupConfig {
+  key: PreferenceKey;
+  // Only shown when a category holds more than one group.
+  label?: string;
+  emoji: string;
+  options: string[];
+  // Omit to hide the free-text input for this group.
+  freeTextPlaceholder?: string;
+}
+
 interface CategoryConfig {
   key: CategoryKey;
   title: string;
-  subtitle: string;
   icon: typeof ChefHat;
-  emoji: string;
-  options: string[];
-  freeTextPlaceholder: string;
+  groups: ChipGroupConfig[];
+  // Optional categories are skipped by the footer and shown as a gate card
+  // on mobile, asking `prompt` until something is selected.
+  optional?: boolean;
+  prompt?: string;
 }
-
-// Cuisines already overlap with the diet options (Vegetarian, Vegan, Keto, Paleo);
-// those are asked about once, in the diets category.
-const CUISINE_CARD_OPTIONS = CUISINE_OPTIONS.filter(
-  (option) => !["Vegetarian", "Vegan", "Keto", "Paleo"].includes(option),
-);
 
 const CATEGORIES: CategoryConfig[] = [
   {
     key: "cuisines",
     title: "Cuisines",
-    subtitle: "Tap the cuisines you love.",
     icon: ChefHat,
-    emoji: "🥘",
-    options: CUISINE_CARD_OPTIONS,
-    freeTextPlaceholder: "e.g. Korean",
-  },
-  {
-    key: "diets",
-    title: "Diets",
-    subtitle: "Tap any diets that match your lifestyle.",
-    icon: Heart,
-    emoji: "🥗",
-    options: DIET_OPTIONS.filter((option) => option !== "None"),
-    freeTextPlaceholder: "e.g. FODMAP",
-  },
-  {
-    key: "allergies",
-    title: "Allergies",
-    subtitle: "Tap anything you must avoid, including restrictions.",
-    icon: AlertCircle,
-    emoji: "🚫",
-    options: ALLERGY_OPTIONS.filter((option) => option !== "None"),
-    freeTextPlaceholder: "e.g. Sulfites",
+    groups: [
+      {
+        key: "cuisines",
+        emoji: "🥘",
+        options: CUISINE_OPTIONS,
+        freeTextPlaceholder: "e.g. Ethiopian",
+      },
+    ],
   },
   {
     key: "likes",
     title: "Foods you love",
-    subtitle: "Tap the ingredients you want to see more often.",
     icon: Utensils,
-    emoji: "❤️",
-    options: FOOD_OPTIONS,
-    freeTextPlaceholder: "e.g. Kimchi",
+    groups: [
+      {
+        key: "likes",
+        emoji: "❤️",
+        options: LIKE_OPTIONS,
+        freeTextPlaceholder: "e.g. Kimchi",
+      },
+    ],
   },
   {
     key: "dislikes",
     title: "Foods to avoid",
-    subtitle: "Tap anything you'd rather not eat.",
     icon: Ban,
-    emoji: "💔",
-    options: FOOD_OPTIONS,
-    freeTextPlaceholder: "e.g. Anchovies",
+    groups: [
+      {
+        key: "dislikes",
+        emoji: "💔",
+        options: DISLIKE_OPTIONS,
+        freeTextPlaceholder: "e.g. Okra",
+      },
+    ],
+  },
+  {
+    key: "dietary",
+    title: "Diet & allergies",
+    icon: Heart,
+    optional: true,
+    prompt: "Any diets or allergies?",
+    groups: [
+      {
+        key: "diets",
+        label: "Diet",
+        emoji: "🥗",
+        options: DIET_OPTIONS.filter((option) => option !== "None"),
+      },
+      {
+        key: "allergies",
+        label: "Allergies & intolerances",
+        emoji: "🚫",
+        options: ALLERGY_OPTIONS.filter((option) => option !== "None"),
+        freeTextPlaceholder: "e.g. Sulfites",
+      },
+    ],
   },
 ];
+
+function getCategorySelection(
+  category: CategoryConfig,
+  preferences: UserPreferences,
+): string[] {
+  return category.groups.flatMap((group) => preferences[group.key]);
+}
 
 interface PreferenceCategoryCardsProps extends WizardStepProps {
   // Lifted by the wizard so Back/Next preserves position across remounts;
@@ -249,7 +272,7 @@ export default function PreferenceCategoryCards({
     onRequestNextStep,
   ]);
 
-  const toggle = (key: CategoryKey, item: string) => {
+  const toggle = (key: PreferenceKey, item: string) => {
     setPreferences((prev) => {
       const current = prev[key];
       const isSelected = current.includes(item);
@@ -292,8 +315,9 @@ export default function PreferenceCategoryCards({
           className="flex flex-wrap gap-2"
         >
           {CATEGORIES.map((category, index) => {
-            const count = preferences[category.key].length;
+            const count = getCategorySelection(category, preferences).length;
             const isVisited = visited.has(index);
+            const isActive = index === activeIndex;
             return (
               <Button
                 key={category.key}
@@ -302,17 +326,24 @@ export default function PreferenceCategoryCards({
                 }}
                 role="tab"
                 id={`preference-tab-${category.key}`}
-                aria-selected={index === activeIndex}
+                aria-selected={isActive}
                 aria-controls={`preference-tabpanel-${category.key}`}
-                tabIndex={index === activeIndex ? 0 : -1}
-                variant={index === activeIndex ? "default" : "outline"}
+                tabIndex={isActive ? 0 : -1}
+                variant={isActive ? "default" : "outline"}
                 size="sm"
+                className={cn(
+                  category.optional && !isActive && "border-dashed",
+                )}
                 onClick={() => goTo(index)}
               >
                 {isVisited && <Check className="mr-1.5 h-3.5 w-3.5" />}
                 {category.title}
-                {count > 0 && (
+                {count > 0 ? (
                   <span className="ml-1.5 opacity-70">{count}</span>
+                ) : (
+                  category.optional && (
+                    <span className="ml-1.5 text-xs opacity-60">Optional</span>
+                  )
                 )}
               </Button>
             );
@@ -328,7 +359,7 @@ export default function PreferenceCategoryCards({
             <ActiveCategoryCard
               key={activeCategory.key}
               category={activeCategory}
-              selected={preferences[activeCategory.key]}
+              preferences={preferences}
               onToggle={toggle}
             />
           </AnimatePresence>
@@ -351,12 +382,12 @@ export default function PreferenceCategoryCards({
 
 function ActiveCategoryCard({
   category,
-  selected,
+  preferences,
   onToggle,
 }: {
   category: CategoryConfig;
-  selected: string[];
-  onToggle: (key: CategoryKey, item: string) => void;
+  preferences: UserPreferences;
+  onToggle: (key: PreferenceKey, item: string) => void;
 }) {
   const CategoryIcon = category.icon;
   return (
@@ -371,14 +402,14 @@ function ActiveCategoryCard({
           <div className="flex items-center gap-2">
             <CategoryIcon className="h-6 w-6 text-primary" />
             <CardTitle>{category.title}</CardTitle>
+            {category.optional && <Badge variant="outline">Optional</Badge>}
           </div>
-          <CardDescription>{category.subtitle}</CardDescription>
         </CardHeader>
         <CardContent>
           <SubstepContent
             category={category}
-            selected={selected}
-            onToggle={(item) => onToggle(category.key, item)}
+            preferences={preferences}
+            onToggle={onToggle}
           />
         </CardContent>
       </Card>
@@ -390,30 +421,34 @@ function ActiveCategoryCard({
 // chip picker + custom input only exists once.
 function SubstepContent({
   category,
-  selected,
+  preferences,
   onToggle,
 }: {
   category: CategoryConfig;
-  selected: string[];
-  onToggle: (item: string) => void;
+  preferences: UserPreferences;
+  onToggle: (key: PreferenceKey, item: string) => void;
 }) {
-  const [freeTextValue, setFreeTextValue] = useState("");
   return (
-    <BadgeGroup
-      options={category.options}
-      selected={selected}
-      onToggle={onToggle}
-      freeTextPlaceholder={category.freeTextPlaceholder}
-      freeTextValue={freeTextValue}
-      onFreeTextChange={setFreeTextValue}
-      emoji={category.emoji}
-    />
+    <div className="space-y-5">
+      {category.groups.map((group) => (
+        <div key={group.key} className="space-y-2">
+          {group.label && (
+            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              {group.label}
+            </p>
+          )}
+          <BadgeGroup
+            options={group.options}
+            selected={preferences[group.key]}
+            onToggle={(item) => onToggle(group.key, item)}
+            freeTextPlaceholder={group.freeTextPlaceholder}
+            emoji={group.emoji}
+          />
+        </div>
+      ))}
+    </div>
   );
 }
-
-// Scroll offset so a newly-opened accordion section doesn't sit flush
-// against the top edge (and would clear any sticky header placed above it).
-const MOBILE_SCROLL_TOP_OFFSET = 16;
 
 function MobilePreferenceAccordion({
   activeIndex,
@@ -427,7 +462,7 @@ function MobilePreferenceAccordion({
   activeIndex: number;
   visited: Set<number>;
   preferences: UserPreferences;
-  onToggle: (key: CategoryKey, item: string) => void;
+  onToggle: (key: PreferenceKey, item: string) => void;
   onOpenSection: (index: number) => void;
   pendingFocusIndex: number | null;
   onPendingFocusHandled: () => void;
@@ -439,32 +474,43 @@ function MobilePreferenceAccordion({
     if (pendingFocusIndex !== index) return;
     const header = headerRefs.current[index];
     if (header) {
-      const top =
-        header.getBoundingClientRect().top +
-        window.scrollY -
-        MOBILE_SCROLL_TOP_OFFSET;
-      window.scrollTo({
-        top,
+      // The header's scroll-margin keeps it off the top edge.
+      header.scrollIntoView({
+        block: "start",
         behavior: prefersReducedMotion ? "auto" : "smooth",
       });
-      header.focus();
+      header.focus({ preventScroll: true });
     }
     onPendingFocusHandled();
   };
 
   return (
-    <div className="divide-y rounded-lg border md:hidden">
+    <div className="space-y-3 md:hidden">
       {CATEGORIES.map((category, index) => {
         const isOpen = index === activeIndex;
         const isVisited = visited.has(index);
-        const selected = preferences[category.key];
-        const summary = summarizeSelection(selected);
+        const summary = summarizeSelection(
+          getCategorySelection(category, preferences),
+        );
+        // Closed and still empty, an optional category reads as a question
+        // the user can opt into rather than a section they must fill.
+        const isGate = category.optional && !isOpen && !summary;
         const headerId = `preference-accordion-header-${category.key}`;
         const panelId = `preference-accordion-panel-${category.key}`;
         const CategoryIcon = category.icon;
 
         return (
-          <div key={category.key}>
+          <div
+            key={category.key}
+            className={cn(
+              "rounded-xl border bg-card transition-[scale,box-shadow] duration-300 motion-reduce:transition-none",
+              isOpen &&
+                "preference-active-border scale-[1.01] shadow-md shadow-primary/10",
+              category.optional &&
+                !isOpen &&
+                "border-dashed border-muted-foreground/40 bg-transparent",
+            )}
+          >
             <button
               ref={(el) => {
                 headerRefs.current[index] = el;
@@ -476,26 +522,45 @@ function MobilePreferenceAccordion({
               onClick={() => {
                 if (!isOpen) onOpenSection(index);
               }}
-              className="flex w-full items-center gap-3 px-4 py-3 text-left"
+              className="flex w-full scroll-mt-4 items-center gap-3 px-4 py-3 text-left"
             >
-              <CategoryIcon className="h-5 w-5 shrink-0 text-primary" />
-              <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-1.5 font-medium">
-                  {isVisited && (
-                    <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
-                  )}
-                  <span className="truncate">{category.title}</span>
-                </span>
-                <span className="block truncate text-xs text-muted-foreground">
-                  {summary ?? (isVisited ? "Nothing selected" : "Optional")}
-                </span>
-              </span>
-              <ChevronDown
+              <CategoryIcon
                 className={cn(
-                  "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
-                  isOpen && "rotate-180",
+                  "h-5 w-5 shrink-0",
+                  isGate ? "text-muted-foreground" : "text-primary",
                 )}
               />
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-1.5 font-medium">
+                  {isVisited && !isGate && (
+                    <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
+                  )}
+                  <span className="truncate">
+                    {isGate ? category.prompt : category.title}
+                  </span>
+                </span>
+                <span className="block truncate text-xs text-muted-foreground">
+                  {summary ??
+                    (category.optional
+                      ? "Optional"
+                      : isVisited
+                        ? "Nothing selected"
+                        : "Not yet")}
+                </span>
+              </span>
+              {isGate ? (
+                <span className="flex shrink-0 items-center gap-1 rounded-full border border-dashed border-primary/50 px-2.5 py-1 text-xs font-medium text-primary">
+                  <Plus className="h-3 w-3" />
+                  Add
+                </span>
+              ) : (
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+                    isOpen && "rotate-180",
+                  )}
+                />
+              )}
             </button>
             <AnimatePresence initial={false}>
               {isOpen && (
@@ -504,21 +569,23 @@ function MobilePreferenceAccordion({
                   id={panelId}
                   role="region"
                   aria-labelledby={headerId}
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
+                  // Clip only while expanding/collapsing so chip emoji
+                  // bursts can rise past the panel edge once it's open.
+                  initial={{ height: 0, opacity: 0, overflow: "hidden" }}
+                  animate={{
+                    height: "auto",
+                    opacity: 1,
+                    transitionEnd: { overflow: "visible" },
+                  }}
+                  exit={{ height: 0, opacity: 0, overflow: "hidden" }}
                   transition={{ duration: prefersReducedMotion ? 0 : 0.25 }}
                   onAnimationComplete={() => scrollAndFocus(index)}
-                  className="overflow-hidden"
                 >
-                  <div className="space-y-4 px-4 pb-4">
-                    <p className="text-sm text-muted-foreground">
-                      {category.subtitle}
-                    </p>
+                  <div className="px-4 pt-1 pb-4">
                     <SubstepContent
                       category={category}
-                      selected={selected}
-                      onToggle={(item) => onToggle(category.key, item)}
+                      preferences={preferences}
+                      onToggle={onToggle}
                     />
                   </div>
                 </motion.div>
@@ -536,19 +603,16 @@ function BadgeGroup({
   selected,
   onToggle,
   freeTextPlaceholder,
-  freeTextValue,
-  onFreeTextChange,
   emoji,
 }: {
   options: string[];
   selected: string[];
   onToggle: (item: string) => void;
-  freeTextPlaceholder: string;
-  freeTextValue: string;
-  onFreeTextChange: (value: string) => void;
+  freeTextPlaceholder?: string;
   emoji: string;
 }) {
   const prefersReducedMotion = useReducedMotion();
+  const [freeTextValue, setFreeTextValue] = useState("");
   const [bursts, setBursts] = useState<{ id: number; option: string }[]>([]);
   const nextBurstId = useRef(0);
 
@@ -574,7 +638,7 @@ function BadgeGroup({
     const trimmed = freeTextValue.trim();
     if (!trimmed) return;
     if (!selected.includes(trimmed)) handleToggle(trimmed);
-    onFreeTextChange("");
+    setFreeTextValue("");
   };
 
   return (
@@ -614,22 +678,29 @@ function BadgeGroup({
           );
         })}
       </div>
-      <div className="flex max-w-sm gap-2">
-        <Input
-          value={freeTextValue}
-          placeholder={freeTextPlaceholder}
-          onChange={(e) => onFreeTextChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              handleAdd();
-            }
-          }}
-        />
-        <Button type="button" variant="outline" size="icon" onClick={handleAdd}>
-          <Plus className="h-4 w-4" />
-        </Button>
-      </div>
+      {freeTextPlaceholder !== undefined && (
+        <div className="flex max-w-sm gap-2">
+          <Input
+            value={freeTextValue}
+            placeholder={freeTextPlaceholder}
+            onChange={(e) => setFreeTextValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleAdd();
+              }
+            }}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={handleAdd}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

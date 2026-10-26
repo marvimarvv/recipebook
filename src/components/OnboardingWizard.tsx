@@ -2,14 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  ChefHat,
-  Settings,
-  SlidersHorizontal,
-  ArrowLeft,
-  ArrowRight,
-  Sparkles,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -21,6 +14,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { HoverArrowCursor } from "@/components/ui/hover-arrow-cursor";
+import { FitText } from "@/components/ui/fit-text";
 import { Progress } from "@/components/ui/progress";
 import PreferenceCategoryCards, {
   createEmptyPreferenceCardsProgress,
@@ -42,22 +36,16 @@ const STEPS = [
   {
     key: "preferences",
     title: "Tell us your food preferences",
-    description: "Pick what you like, one category at a time.",
-    icon: ChefHat,
     Component: PreferenceCategoryCards,
   },
   {
     key: "nutrition",
     title: "Set your nutrition goals",
-    description: "Daily calories and macro targets.",
-    icon: Settings,
     Component: NutritionSettings,
   },
   {
     key: "additional",
     title: "Fine-tune your recipe experience",
-    description: "Cooking skill level, meal plan, and meals per day.",
-    icon: SlidersHorizontal,
     Component: AdditionalSettings,
   },
 ] as const;
@@ -143,31 +131,30 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
 
   return (
     <div className="mx-auto max-w-4xl">
-      <div className="mb-8 text-center">
-        <h1 className="mb-2 bg-linear-to-r from-primary to-secondary bg-clip-text text-3xl font-bold text-transparent md:text-4xl">
-          Let&apos;s set up your RecipeBook
-        </h1>
-        <p className="mx-auto max-w-xl text-muted-foreground">
-          A few quick steps, then we&apos;ll generate your first week of meals
-          automatically.
-        </p>
+      <div className="mb-4 flex items-center gap-3">
+        <Progress
+          className="h-5 flex-1"
+          value={((step + 1) / STEPS.length) * 100}
+          label={`Step ${step + 1} of ${STEPS.length}`}
+        />
+        <button
+          type="button"
+          onClick={handleSkip}
+          className="shrink-0 text-sm text-muted-foreground underline-offset-4 hover:underline"
+        >
+          Skip setup
+        </button>
       </div>
 
-      <div className="mb-6 space-y-2">
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>
-            Step {step + 1} of {STEPS.length}
-          </span>
-          <button
-            type="button"
-            onClick={handleSkip}
-            className="underline-offset-4 hover:underline"
-          >
-            Skip setup
-          </button>
-        </div>
-        <Progress value={((step + 1) / STEPS.length) * 100} />
-      </div>
+      <FitText
+        as="h1"
+        minSize={20}
+        maxSize={44}
+        className="mb-4 text-center font-bold"
+        textClassName="bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent"
+      >
+        Let&apos;s set up your RecipeBook
+      </FitText>
 
       <AnimatePresence mode="wait">
         <motion.div
@@ -177,28 +164,28 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.25 }}
         >
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary">
-                <current.icon className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold">{current.title}</h2>
-                <p className="text-sm text-muted-foreground">
-                  {current.description}
-                </p>
-              </div>
-            </div>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <FitText
+              as="h2"
+              minSize={14}
+              maxSize={24}
+              className="flex-1 font-semibold"
+            >
+              {current.title}
+            </FitText>
             {headerAction && (
               <Button
                 variant="outline"
                 size="sm"
+                className="shrink-0"
                 onClick={headerAction.onClick}
+                aria-label={headerAction.label}
+                title={headerAction.label}
               >
                 {headerAction.icon && (
                   <headerAction.icon className="mr-2 h-4 w-4" />
                 )}
-                {headerAction.label}
+                Reset
               </Button>
             )}
           </div>

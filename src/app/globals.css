@@ -223,6 +223,46 @@
   animation: gradient 3s ease infinite;
 }
 
+/* Active preference section: a matte primary-to-secondary border that slowly
+   drifts around the card. Without @property support it stays a static
+   gradient. */
+@property --border-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes border-drift {
+  to {
+    --border-angle: 360deg;
+  }
+}
+
+.preference-active-border {
+  border: 2px solid transparent;
+  background:
+    linear-gradient(
+        color-mix(in oklab, var(--color-primary) 5%, var(--color-card)),
+        color-mix(in oklab, var(--color-primary) 5%, var(--color-card))
+      )
+      padding-box,
+    conic-gradient(
+        from var(--border-angle),
+        var(--color-primary),
+        var(--color-secondary),
+        color-mix(in oklab, var(--color-primary) 25%, transparent),
+        var(--color-primary)
+      )
+      border-box;
+  animation: border-drift 6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preference-active-border {
+    animation: none;
+  }
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

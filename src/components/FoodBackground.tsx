@@ -39,8 +39,10 @@ interface ShapeConfig {
   behavior: Behavior;
 }
 
-const DESKTOP_COUNT = 14;
-const MOBILE_COUNT = 8;
+const SHAPE_COUNT = 14;
+// The effect is off on phones: below tablet size, or in landscape phones whose
+// height is short.
+const SHOW_QUERY = "(min-width: 640px) and (min-height: 500px)";
 // Every shape gets its own opacity, evenly spread across this range.
 const MIN_OPACITY = 0.05;
 const MAX_OPACITY = 0.17;
@@ -85,7 +87,7 @@ function makeConfig(id: number, opacity: number): ShapeConfig {
 let cachedConfigs: ShapeConfig[] | null = null;
 function getClientConfigs() {
   if (!cachedConfigs) {
-    const count = window.innerWidth < 640 ? MOBILE_COUNT : DESKTOP_COUNT;
+    const count = SHAPE_COUNT;
     const opacities = Array.from(
       { length: count },
       (_, i) => MIN_OPACITY + ((MAX_OPACITY - MIN_OPACITY) * i) / (count - 1),
@@ -96,6 +98,14 @@ function getClientConfigs() {
 }
 const getServerConfigs = (): ShapeConfig[] | null => null;
 const subscribe = () => () => {};
+
+function subscribeToShowQuery(onChange: () => void) {
+  const query = window.matchMedia(SHOW_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+const getShouldShow = () => window.matchMedia(SHOW_QUERY).matches;
+const getShouldShowOnServer = () => false;
 
 interface ShapeHandle {
   path: SVGPathElement;
@@ -392,6 +402,11 @@ export default function FoodBackground() {
   const interpolators = useMemo(() => createMorphInterpolators(), []);
   const registry = useRef<Registry>(new Map());
   const [popped, setPopped] = useState(0);
+  const shouldShow = useSyncExternalStore(
+    subscribeToShowQuery,
+    getShouldShow,
+    getShouldShowOnServer,
+  );
 
   useEffect(() => {
     const map = registry.current;
@@ -414,6 +429,8 @@ export default function FoodBackground() {
     document.addEventListener("click", onClick);
     return () => document.removeEventListener("click", onClick);
   }, []);
+
+  if (!shouldShow) return null;
 
   return (
     <>
