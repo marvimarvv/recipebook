@@ -1,8 +1,10 @@
 import type { CSSProperties } from "react";
 
-// Matte mesh gradient behind the Recap: blurred theme-colored blobs drifting
+// Matte mesh gradient behind the Recap: soft theme-colored blobs drifting
 // slowly (CSS `mesh-blob` animation, still under reduced motion) with grain
 // on top. Colors come from the theme tokens, so dark mode follows along.
+// The softness comes from the gradient's falloff alone - a blur filter on
+// blobs this size stalls the Recap's opening frame on iPhones.
 const BLOBS = [
   {
     color: "--primary",
@@ -45,11 +47,11 @@ export default function MeshGradient() {
       {BLOBS.map((blob, index) => (
         <div
           key={index}
-          className="mesh-blob absolute rounded-full opacity-80 blur-3xl"
+          className="mesh-blob absolute rounded-full opacity-80"
           style={
             {
               ...blob.style,
-              background: `radial-gradient(circle at center, hsl(var(${blob.color})) 0%, transparent 68%)`,
+              background: `radial-gradient(circle at center, hsl(var(${blob.color})) 0%, hsl(var(${blob.color}) / 0.55) 30%, hsl(var(${blob.color}) / 0.15) 52%, transparent 70%)`,
               "--mesh-dx": blob.dx,
               "--mesh-dy": blob.dy,
               "--mesh-duration": blob.duration,

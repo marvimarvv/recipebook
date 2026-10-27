@@ -61,6 +61,8 @@ interface RecapProps {
 // The mesh and the content are separate fixed layers (z-60 / z-62) so the
 // background shapes can rise in between (z-61, see FoodBackground) - which is
 // also why this isn't a native <dialog>: the top layer would cover them.
+// Surfaces only use backdrop blur from `sm` up, where those shapes exist:
+// on phones it blurs nothing but a smooth gradient and makes the fade-in stutter.
 export default function Recap({ onFinish }: RecapProps) {
   const open = useStore((state) => state.recapPhase !== "closed");
   const prefersReducedMotion = useReducedMotion();
@@ -192,7 +194,7 @@ function RecapContent({ onFinish }: RecapProps) {
       role="dialog"
       aria-modal="true"
       aria-label="Review your choices"
-      className="fixed inset-0 z-62 overflow-y-auto overscroll-contain"
+      className="fixed inset-0 z-62 overflow-x-hidden overflow-y-auto overscroll-contain"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.6 } }}
@@ -201,25 +203,22 @@ function RecapContent({ onFinish }: RecapProps) {
       <div className="mx-auto flex min-h-dvh max-w-2xl flex-col px-4 pt-6 md:pt-12">
         <div className="mb-6 flex items-center gap-3">
           <div className="flex-1">
-            <AnimatePresence initial={false}>
-              {showCards && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="text-foreground/75"
-                >
-                  Here&apos;s everything you picked. Open a step to change
-                  anything.
-                </motion.p>
-              )}
-            </AnimatePresence>
+            {/* Only fades: removing it would shrink the header row and nudge
+                everything below. */}
+            <motion.p
+              initial={false}
+              animate={{ opacity: showCards ? 1 : 0 }}
+              aria-hidden={!showCards}
+              className="text-foreground/75"
+            >
+              Here&apos;s everything you picked. Open a step to change anything.
+            </motion.p>
           </div>
           <Button
             ref={closeButtonRef}
             variant="ghost"
             size="icon"
-            className="shrink-0 rounded-full bg-background/60 backdrop-blur-sm hover:bg-background/80"
+            className="shrink-0 rounded-full bg-background/60 hover:bg-background/80 sm:backdrop-blur-sm"
             onClick={() => dispatchRecap("close")}
             disabled={!canCloseRecap(phase)}
             aria-label="Back to the wizard"
@@ -228,7 +227,7 @@ function RecapContent({ onFinish }: RecapProps) {
           </Button>
         </div>
 
-        <div className="flex flex-1 flex-col">
+        <div className="mb-6 flex flex-1 flex-col">
           <AnimatePresence mode="popLayout">
             {showCards ? (
               <motion.div
@@ -279,14 +278,19 @@ function RecapContent({ onFinish }: RecapProps) {
           </AnimatePresence>
         </div>
 
-        <AnimatePresence>
+        {/* popLayout: the leaving footer stops taking up space right away, so
+            the generating view is centered where it will stay instead of
+            jumping once the footer is gone. The gap above it is the column's
+            margin: popLayout pins it at its offset, so a margin of its own
+            would be added twice. */}
+        <AnimatePresence mode="popLayout">
           {(isEditable || phase === "celebrating") && (
             <motion.div
               key="footer"
-              className="sticky bottom-0 mt-6 flex flex-col items-center gap-3 pt-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+              className="sticky bottom-0 flex flex-col items-center gap-3 pt-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
+              exit={{ opacity: 0, transition: { duration: 0.2 } }}
               transition={{
                 type: "spring",
                 stiffness: 260,
@@ -298,7 +302,7 @@ function RecapContent({ onFinish }: RecapProps) {
                 <button
                   type="button"
                   onClick={showMacros}
-                  className="flex items-center gap-1.5 rounded-full bg-background/80 px-3 py-1 text-sm backdrop-blur-sm"
+                  className="flex items-center gap-1.5 rounded-full bg-background/80 px-3 py-1 text-sm sm:backdrop-blur-sm"
                 >
                   <AlertCircle className="h-4 w-4 text-destructive" />
                   Macros add up to {macroTotal}% ·{" "}
@@ -356,7 +360,7 @@ function RecapStepCard({
   const panelId = `recap-step-${index}`;
 
   return (
-    <div className="rounded-2xl border bg-card/85 shadow-sm backdrop-blur-md">
+    <div className="rounded-2xl border bg-card/85 shadow-sm sm:backdrop-blur-md">
       <button
         type="button"
         aria-expanded={expanded}
@@ -384,7 +388,10 @@ function RecapStepCard({
         />
       </button>
 
-      <AnimatePresence initial={false} mode="wait">
+      {/* Summary and sections swap at the same time, each animating its own
+          height, so the card resizes in one smooth motion instead of
+          collapsing to its header first. */}
+      <AnimatePresence initial={false}>
         {expanded ? (
           <motion.div
             key="sections"
@@ -410,33 +417,35 @@ function RecapStepCard({
             />
           </motion.div>
         ) : (
-          <motion.dl
+          <motion.div
             key="summary"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
-            className="space-y-1.5 px-4 pb-4 text-sm md:px-5"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.25 }}
+            className="overflow-hidden"
           >
-            {step.sections.map((section, sectionIndex) => {
-              const summary = step.getSummary(sectionIndex);
-              return (
-                <div key={section.key} className="flex gap-2">
-                  <dt className="shrink-0 text-muted-foreground">
-                    {section.title}
-                  </dt>
-                  <dd
-                    className={cn(
-                      "min-w-0 flex-1 truncate pr-0.5 text-right",
-                      summary === null && "text-muted-foreground italic",
-                    )}
-                  >
-                    {summary ?? step.emptyLabel(sectionIndex)}
-                  </dd>
-                </div>
-              );
-            })}
-          </motion.dl>
+            <dl className="space-y-1.5 px-4 pb-4 text-sm md:px-5">
+              {step.sections.map((section, sectionIndex) => {
+                const summary = step.getSummary(sectionIndex);
+                return (
+                  <div key={section.key} className="flex gap-2">
+                    <dt className="shrink-0 text-muted-foreground">
+                      {section.title}
+                    </dt>
+                    <dd
+                      className={cn(
+                        "min-w-0 flex-1 truncate pr-0.5 text-right",
+                        summary === null && "text-muted-foreground italic",
+                      )}
+                    >
+                      {summary ?? step.emptyLabel(sectionIndex)}
+                    </dd>
+                  </div>
+                );
+              })}
+            </dl>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
@@ -467,7 +476,7 @@ function GeneratingView({
       </motion.div>
       <div
         role="status"
-        className="w-full max-w-sm rounded-2xl bg-background/75 px-6 py-5 backdrop-blur-md"
+        className="w-full max-w-sm rounded-2xl bg-background/75 px-6 py-5 sm:backdrop-blur-md"
       >
         <AnimatePresence mode="wait" initial={false}>
           <motion.h3
@@ -493,7 +502,7 @@ function ErrorBanner({ onBackToReview }: { onBackToReview: () => void }) {
   return (
     <div
       role="alert"
-      className="flex items-start gap-3 rounded-2xl border border-destructive/40 bg-card/90 p-4 backdrop-blur-md"
+      className="flex items-start gap-3 rounded-2xl border border-destructive/40 bg-card/90 p-4 sm:backdrop-blur-md"
     >
       <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
       <div className="flex-1">

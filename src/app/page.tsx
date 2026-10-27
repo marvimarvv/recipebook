@@ -27,6 +27,9 @@ import { useStore } from "@/store/useStore";
 
 const HeroScene = dynamic(() => import("@/components/HeroScene"), {
   ssr: false,
+  // Holds the scene's space (same size as its root) while it loads, so the
+  // meal plan below doesn't jump down once it appears.
+  loading: () => <div className="h-[340px] max-h-[30vh] w-full" />,
 });
 
 // The persisted onboarding flag rehydrates from localStorage *after* the

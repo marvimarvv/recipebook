@@ -10,7 +10,13 @@ const nextConfig = withSerwist({
   // iOS specific: Enable output for better PWA support
   output: "standalone",
   // Fix cross-origin request warning for development
-  allowedDevOrigins: ["nf4qfd-3000.csb.app", "localhost:3000"],
+  // The LAN IP lets a phone on the same Wi-Fi load the dev server; without it
+  // the JS is blocked and the app never gets past the splash screen.
+  allowedDevOrigins: [
+    "nf4qfd-3000.csb.app",
+    "localhost:3000",
+    "192.168.178.23",
+  ],
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },

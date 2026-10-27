@@ -318,18 +318,20 @@ export default function SectionedStep({
           id={`${idPrefix}-tabpanel-${activeSection.key}`}
           aria-labelledby={`${idPrefix}-tab-${activeSection.key}`}
         >
-          <AnimatePresence mode="wait">
-            <ActiveSectionCard
-              key={activeSection.key}
-              section={activeSection}
-              showOptIn={showOptIn(activeIndex)}
-              optInNoLabel={optInNoLabel}
-              onOptInYes={() => confirmOptIn(activeIndex)}
-              onOptInNo={() => declineOptIn(activeIndex)}
-            >
-              {renderContent(activeIndex)}
-            </ActiveSectionCard>
-          </AnimatePresence>
+          <AnimatedHeight>
+            <AnimatePresence mode="wait">
+              <ActiveSectionCard
+                key={activeSection.key}
+                section={activeSection}
+                showOptIn={showOptIn(activeIndex)}
+                optInNoLabel={optInNoLabel}
+                onOptInYes={() => confirmOptIn(activeIndex)}
+                onOptInNo={() => declineOptIn(activeIndex)}
+              >
+                {renderContent(activeIndex)}
+              </ActiveSectionCard>
+            </AnimatePresence>
+          </AnimatedHeight>
         </div>
       </div>
 
@@ -355,6 +357,40 @@ export default function SectionedStep({
         onPendingFocusHandled={() => setPendingFocusIndex(null)}
       />
     </>
+  );
+}
+
+/**
+ * Animates its own height to follow its content, so swapping what's inside
+ * (another section's card, an opt-in prompt for its editor) doesn't make
+ * everything below jump. Never clips: the active-card glow and chip bursts
+ * stay visible, and a growing card briefly overlaps what's below instead.
+ */
+export function AnimatedHeight({ children }: { children: ReactNode }) {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number | "auto">("auto");
+  const prefersReducedMotion = useReducedMotion();
+
+  useEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+    const observer = new ResizeObserver(() => {
+      // AnimatePresence's "wait" mode leaves it empty for a moment between
+      // two cards - hold the old height instead of dipping to 0.
+      if (content.offsetHeight > 0) setHeight(content.offsetHeight);
+    });
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <motion.div
+      initial={false}
+      animate={{ height }}
+      transition={{ duration: prefersReducedMotion ? 0 : 0.25 }}
+    >
+      <div ref={contentRef}>{children}</div>
+    </motion.div>
   );
 }
 
@@ -578,18 +614,21 @@ export function SectionAccordion({
                   transition={{ duration: prefersReducedMotion ? 0 : 0.25 }}
                   onAnimationComplete={() => scrollAndFocus(index)}
                 >
-                  <div className="px-4 pt-1 pb-4">
-                    {optIn?.show(index) ? (
-                      <OptInPrompt
-                        question={section.prompt ?? section.title}
-                        noLabel={optIn.noLabel}
-                        onYes={() => optIn.onYes(index)}
-                        onNo={() => optIn.onNo(index)}
-                      />
-                    ) : (
-                      renderContent(index)
-                    )}
-                  </div>
+                  {/* Answering "Yes" swaps the prompt for the full editor. */}
+                  <AnimatedHeight>
+                    <div className="px-4 pt-1 pb-4">
+                      {optIn?.show(index) ? (
+                        <OptInPrompt
+                          question={section.prompt ?? section.title}
+                          noLabel={optIn.noLabel}
+                          onYes={() => optIn.onYes(index)}
+                          onNo={() => optIn.onNo(index)}
+                        />
+                      ) : (
+                        renderContent(index)
+                      )}
+                    </div>
+                  </AnimatedHeight>
                 </motion.div>
               )}
             </AnimatePresence>

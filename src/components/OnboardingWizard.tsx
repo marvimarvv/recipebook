@@ -24,6 +24,7 @@ import {
   type SectionProgress,
 } from "@/components/SectionedStep";
 import AdditionalSections from "@/components/AdditionalSections";
+import { AnimatedHeight } from "@/components/SectionedStep";
 import { useStore } from "@/store/useStore";
 import { StepHeaderAction } from "@/types";
 
@@ -148,76 +149,80 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
         Let&apos;s set up your RecipeBook
       </FitText>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={current.key}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.25 }}
-        >
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <FitText
-              as="h2"
-              minSize={14}
-              maxSize={24}
-              className="flex-1 font-semibold"
-            >
-              {current.title}
-            </FitText>
-            {headerAction && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="shrink-0"
-                onClick={headerAction.onClick}
-                aria-label={headerAction.label}
-                title={headerAction.label}
+      {/* Steps differ in height: animate it so the footer glides instead of
+          snapping when one step replaces another. */}
+      <AnimatedHeight>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={current.key}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.25 }}
+          >
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <FitText
+                as="h2"
+                minSize={14}
+                maxSize={24}
+                className="flex-1 font-semibold"
               >
-                {headerAction.icon && (
-                  <headerAction.icon className="mr-2 h-4 w-4" />
-                )}
-                Reset
-              </Button>
-            )}
-          </div>
+                {current.title}
+              </FitText>
+              {headerAction && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  onClick={headerAction.onClick}
+                  aria-label={headerAction.label}
+                  title={headerAction.label}
+                >
+                  {headerAction.icon && (
+                    <headerAction.icon className="mr-2 h-4 w-4" />
+                  )}
+                  Reset
+                </Button>
+              )}
+            </div>
 
-          {step === 0 ? (
-            <PreferenceCategoryCards
-              hideHeader
-              onRegisterAction={registerHeaderAction}
-              progress={preferenceProgress}
-              onProgressChange={setPreferenceProgress}
-              isFirstOverallStep={isFirstStep}
-              onRequestPrevStep={handleBack}
-              onRequestNextStep={handleNext}
-              onFooterStateChange={setPreferenceFooter}
-            />
-          ) : step === 1 ? (
-            <NutritionSections
-              hideHeader
-              onRegisterAction={registerHeaderAction}
-              progress={nutritionProgress}
-              onProgressChange={setNutritionProgress}
-              isFirstOverallStep={isFirstStep}
-              onRequestPrevStep={handleBack}
-              onRequestNextStep={handleNext}
-              onFooterStateChange={setNutritionFooter}
-            />
-          ) : (
-            <AdditionalSections
-              hideHeader
-              onRegisterAction={registerHeaderAction}
-              progress={fineTuneProgress}
-              onProgressChange={setFineTuneProgress}
-              isFirstOverallStep={isFirstStep}
-              onRequestPrevStep={handleBack}
-              onRequestNextStep={handleNext}
-              onFooterStateChange={setFineTuneFooter}
-            />
-          )}
-        </motion.div>
-      </AnimatePresence>
+            {step === 0 ? (
+              <PreferenceCategoryCards
+                hideHeader
+                onRegisterAction={registerHeaderAction}
+                progress={preferenceProgress}
+                onProgressChange={setPreferenceProgress}
+                isFirstOverallStep={isFirstStep}
+                onRequestPrevStep={handleBack}
+                onRequestNextStep={handleNext}
+                onFooterStateChange={setPreferenceFooter}
+              />
+            ) : step === 1 ? (
+              <NutritionSections
+                hideHeader
+                onRegisterAction={registerHeaderAction}
+                progress={nutritionProgress}
+                onProgressChange={setNutritionProgress}
+                isFirstOverallStep={isFirstStep}
+                onRequestPrevStep={handleBack}
+                onRequestNextStep={handleNext}
+                onFooterStateChange={setNutritionFooter}
+              />
+            ) : (
+              <AdditionalSections
+                hideHeader
+                onRegisterAction={registerHeaderAction}
+                progress={fineTuneProgress}
+                onProgressChange={setFineTuneProgress}
+                isFirstOverallStep={isFirstStep}
+                onRequestPrevStep={handleBack}
+                onRequestNextStep={handleNext}
+                onFooterStateChange={setFineTuneFooter}
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </AnimatedHeight>
 
       <div className="sticky bottom-5 z-50 mt-8 flex items-center justify-between rounded-lg border bg-background/95 p-4 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
         {showBackButton ? (
