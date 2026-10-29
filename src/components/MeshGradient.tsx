@@ -62,7 +62,10 @@ export default function MeshGradient() {
       ))}
       <div
         className="absolute inset-0 opacity-[0.12]"
-        style={{ backgroundImage: "var(--noise-3)" }}
+        style={{
+          backgroundImage: "var(--noise-grain)",
+          backgroundSize: "128px 128px",
+        }}
       />
     </div>
   );

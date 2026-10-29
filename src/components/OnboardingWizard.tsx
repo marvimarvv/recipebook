@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -71,6 +71,14 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
   const completeOnboarding = useStore((state) => state.completeOnboarding);
   const dispatchRecap = useStore((state) => state.dispatchRecap);
   const nutritionSettings = useStore((state) => state.nutritionSettings);
+
+  // Fetch and decode the Recap's grain tile now, so the Recap's first frame
+  // doesn't wait on it.
+  useEffect(() => {
+    const grain = new Image();
+    grain.src = "/noise.png";
+    void grain.decode?.().catch(() => {});
+  }, []);
 
   const registerHeaderAction = useCallback(
     (action: StepHeaderAction | null) => setHeaderAction(action),
