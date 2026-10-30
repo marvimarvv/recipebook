@@ -134,7 +134,9 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
     <div className="mx-auto max-w-4xl">
       <div className="mb-4 flex items-center gap-3">
         <Progress
-          className="h-5 flex-1"
+          className="h-5 flex-1 bg-muted/60"
+          indicatorClassName="bg-primary/20"
+          labelClassName="text-foreground"
           value={((step + 1) / STEPS.length) * 100}
           label={`Step ${step + 1} of ${STEPS.length}`}
         />
@@ -189,7 +191,7 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
                   {headerAction.icon && (
                     <headerAction.icon className="mr-2 h-4 w-4" />
                   )}
-                  Reset
+                  Reset step
                 </Button>
               )}
             </div>

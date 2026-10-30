@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cal_Sans } from "next/font/google";
 import FoodBackground from "@/components/FoodBackground";
+import MeshGradient from "@/components/MeshGradient";
 import "./globals.css";
 
 const calSans = Cal_Sans({
@@ -59,6 +60,11 @@ export default function RootLayout({
     // to <html> before React hydrates; this only silences that one element.
     <html lang="en" suppressHydrationWarning>
       <body className={`${calSans.variable} ${calSans.className} antialiased`}>
+        {/* Same matte mesh as the Recap, behind everything (the food shapes
+            come after it in DOM order, so they stay on top). */}
+        <div className="pointer-events-none fixed inset-0 z-0 opacity-45">
+          <MeshGradient />
+        </div>
         <FoodBackground />
         {children}
       </body>

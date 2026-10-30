@@ -46,7 +46,7 @@ const Slider = React.forwardRef<HTMLInputElement, SliderProps>(
           className,
         )}
         style={{
-          background: "linear-gradient(to right, hsl(var(--secondary)), hsl(var(--primary)))",
+          background: "hsl(var(--primary) / 0.2)",
           ...style,
         }}
         {...props}

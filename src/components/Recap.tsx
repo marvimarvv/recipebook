@@ -360,12 +360,24 @@ function RecapStepCard({
   const panelId = `recap-step-${index}`;
 
   return (
-    <div className="rounded-2xl border bg-card/85 shadow-sm sm:backdrop-blur-md">
+    <div
+      className={cn(
+        "rounded-2xl border bg-card/85 shadow-sm transition-colors sm:backdrop-blur-md",
+        !expanded && "cursor-pointer hover:bg-card/95",
+      )}
+      // Mouse convenience only: the header button below is the accessible
+      // control, so the collapsed summary rows open the card too.
+      onClick={expanded ? undefined : onToggle}
+    >
       <button
         type="button"
         aria-expanded={expanded}
         aria-controls={panelId}
-        onClick={onToggle}
+        onClick={(event) => {
+          // The card handles clicks while collapsed; don't toggle twice.
+          if (!expanded) event.stopPropagation();
+          onToggle();
+        }}
         className="flex w-full items-center gap-3 px-4 py-4 text-left md:px-5"
       >
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary">
