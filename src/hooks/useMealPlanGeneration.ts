@@ -274,7 +274,7 @@ export function useMealPlanGeneration() {
 
       const weekStartDate = startOfWeek(new Date());
       const days: MealPlan[] = [];
-      let usedFallback = false;
+      const failedDays: { day: string; error: string }[] = [];
 
       for (let i = 0; i < totalDays; i++) {
         const dayDate = addDays(weekStartDate, i);
@@ -291,8 +291,11 @@ export function useMealPlanGeneration() {
             );
             mealsByType = day?.meals;
             if (!mealsByType) throw new Error("Empty response");
-          } catch {
-            usedFallback = true;
+          } catch (error) {
+            const message =
+              error instanceof Error ? error.message : String(error);
+            console.warn(`AI generation failed for ${dayLabel}:`, message);
+            failedDays.push({ day: dayLabel, error: message });
             mealsByType = undefined;
           }
         }
@@ -333,11 +336,14 @@ export function useMealPlanGeneration() {
       );
       setGenerationResult(weekMealPlan, snapshot);
 
-      if (usedFallback) {
+      if (failedDays.length > 0) {
+        const reasons = [...new Set(failedDays.map((f) => f.error))].join("; ");
         addToast({
-          title: "Some days used mock data",
-          description:
-            "AI generation failed for one or more days, so mock recipes were used instead.",
+          title:
+            failedDays.length === totalDays
+              ? "AI generation failed - using mock data"
+              : "Some days used mock data",
+          description: `${failedDays.map((f) => f.day).join(", ")}: ${reasons}`,
           type: "warning",
         });
       } else {
