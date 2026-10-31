@@ -47,24 +47,72 @@ export async function checkMistralAPI(): Promise<boolean> {
   }
 }
 
-// Generate a single day's meals via the server route.
+const MAX_ATTEMPTS = 3;
+const BASE_DELAY_MS = 1_000;
+const MAX_DELAY_MS = 10_000;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Exponential backoff with jitter, honouring Retry-After (seconds) if given.
+export function retryDelayMs(attempt: number, retryAfter?: string | null) {
+  const retryAfterSeconds = retryAfter ? Number(retryAfter) : NaN;
+  if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds >= 0) {
+    return Math.min(retryAfterSeconds * 1000, MAX_DELAY_MS);
+  }
+  const exponential = BASE_DELAY_MS * 2 ** (attempt - 1);
+  return Math.min(exponential + Math.random() * 500, MAX_DELAY_MS);
+}
+
+// Generate a single day's meals via the server route. Transient failures
+// (rate limits, timeouts, truncated/invalid AI output, network errors) are
+// retried a few times before giving up.
 export async function generateDayMealPlan(
   preferences: UserPreferences,
   nutritionSettings: NutritionSettings,
   options: GenerationOptions,
   dayLabel: string,
 ): Promise<RawDayMealPlan | null> {
-  const response = await fetch("/api/generate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ preferences, nutritionSettings, options, dayLabel }),
-  });
+  let lastError = "Failed to generate meal plan";
 
-  const data = await response.json().catch(() => null);
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    let response: Response;
+    try {
+      response = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          preferences,
+          nutritionSettings,
+          options,
+          dayLabel,
+        }),
+      });
+    } catch {
+      lastError = "Network error";
+      if (attempt < MAX_ATTEMPTS) await sleep(retryDelayMs(attempt));
+      continue;
+    }
 
-  if (!response.ok) {
-    throw new Error(data?.error || "Failed to generate meal plan");
+    const data = await response.json().catch(() => null);
+
+    if (response.ok && data?.day?.meals) {
+      return data.day;
+    }
+
+    lastError =
+      data?.error ||
+      (response.ok ? "Empty response" : `HTTP ${response.status}`);
+
+    // Server says it's permanent (bad key, bad request, not configured).
+    // Gateway errors without a JSON body (e.g. platform timeouts) have no
+    // flag, so treat them as retryable.
+    const retryable = data?.retryable ?? response.status >= 429;
+    if (!retryable || attempt === MAX_ATTEMPTS) break;
+
+    await sleep(retryDelayMs(attempt, response.headers.get("retry-after")));
   }
 
-  return data?.day ?? null;
+  throw new Error(lastError);
 }
