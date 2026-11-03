@@ -22,6 +22,9 @@ import { useStore } from "@/store/useStore";
 type Behavior = "morph" | "burst" | "jiggle";
 const BEHAVIORS: Behavior[] = ["morph", "burst", "jiggle"];
 
+// The pop counter fades out this long after the last pop.
+const COUNTER_FADE_MS = 10_000;
+
 interface ShapeConfig {
   id: number;
   food: number;
@@ -147,6 +150,7 @@ interface BackgroundShapeProps {
   config: ShapeConfig;
   registry: RefObject<Registry>;
   onPop: () => void;
+  onInteract: () => void;
   reduced: boolean;
   gradientId: string;
   interpolators: ReturnType<typeof createMorphInterpolators>;
@@ -156,6 +160,7 @@ function BackgroundShape({
   config,
   registry,
   onPop,
+  onInteract,
   reduced,
   gradientId,
   interpolators,
@@ -260,6 +265,7 @@ function BackgroundShape({
     if (busyRef.current) return;
     busyRef.current = true;
     flash();
+    onInteract();
     // A burst shape counts as popped even when reduced motion swaps the
     // animation for a fade.
     if (config.behavior === "burst") onPop();
@@ -416,12 +422,21 @@ export default function FoodBackground() {
   const interpolators = useMemo(() => createMorphInterpolators(), []);
   const registry = useRef<Registry>(new Map());
   const [popped, setPopped] = useState(0);
+  const [interactions, setInteractions] = useState(0);
+  const [fadedKey, setFadedKey] = useState("");
   const lifted = useStore((state) => state.recapPhase !== "closed");
+  const counterKey = `${interactions}-${lifted}`;
   const shouldShow = useSyncExternalStore(
     subscribeToShowQuery,
     getShouldShow,
     getShouldShowOnServer,
   );
+
+  // The counter fades out once clicking stops, and returns on any new shape click or when the Recap opens.
+  useEffect(() => {
+    const timer = setTimeout(() => setFadedKey(counterKey), COUNTER_FADE_MS);
+    return () => clearTimeout(timer);
+  }, [counterKey]);
 
   useEffect(() => {
     const map = registry.current;
@@ -473,6 +488,7 @@ export default function FoodBackground() {
               config={config}
               registry={registry}
               onPop={() => setPopped((n) => n + 1)}
+              onInteract={() => setInteractions((n) => n + 1)}
               reduced={reduced}
               gradientId={gradientId}
               interpolators={interpolators}
@@ -492,7 +508,8 @@ export default function FoodBackground() {
           role="status"
           aria-label={`${popped} ${popped === 1 ? "shape" : "shapes"} popped`}
           data-lifted={lifted}
-          className="pointer-events-none fixed left-1/2 z-40 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-full border-2 border-primary bg-white text-foreground tabular-nums data-[lifted=true]:z-63"
+          data-faded={fadedKey === counterKey}
+          className="pointer-events-none fixed left-1/2 z-40 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-full border-2 border-primary bg-white text-foreground tabular-nums transition-opacity duration-700 data-[faded=true]:opacity-0 data-[lifted=true]:z-63"
           style={{ bottom: "max(1rem, env(safe-area-inset-bottom))" }}
         >
           <motion.span

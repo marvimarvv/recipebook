@@ -103,7 +103,8 @@ function RecapContent({ onFinish }: RecapProps) {
   const completeOnboarding = useStore((state) => state.completeOnboarding);
   const setGenerationError = useStore((state) => state.setGenerationError);
   const nutritionSettings = useStore((state) => state.nutritionSettings);
-  const { generateWeek } = useMealPlanGeneration();
+  const { generateWeek, resetGeneration } = useMealPlanGeneration();
+  const abortRef = useRef<AbortController | null>(null);
   const prefersReducedMotion = useReducedMotion();
 
   const steps: StepSections[] = [
@@ -136,10 +137,18 @@ function RecapContent({ onFinish }: RecapProps) {
     };
   }, []);
 
+  const handleClose = () => {
+    if (phase === "generating") {
+      abortRef.current?.abort();
+      resetGeneration();
+    }
+    dispatchRecap("close");
+  };
+
   useEffect(() => {
     if (!canCloseRecap(phase)) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") dispatchRecap("close");
+      if (e.key === "Escape") handleClose();
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
@@ -158,13 +167,19 @@ function RecapContent({ onFinish }: RecapProps) {
   const runGeneration = async (event: "burstDone" | "retry") => {
     dispatchRecap(event);
     const startedAt = Date.now();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    const { signal } = controller;
     try {
       const useAI = await checkMistralAPI();
-      await generateWeek(useAI);
+      signal.throwIfAborted();
+      await generateWeek(useAI, signal);
       if (useStore.getState().generation.status !== "success") {
         throw new Error("Generation did not finish");
       }
     } catch (error) {
+      // Closed by the user: the Recap is already gone, nothing to report.
+      if (signal.aborted) return;
       setGenerationError(
         error instanceof Error ? error.message : "Generation failed",
       );
@@ -172,6 +187,7 @@ function RecapContent({ onFinish }: RecapProps) {
       return;
     }
     await wait(remainingHoldMs(startedAt, Date.now(), MIN_GENERATING_MS));
+    if (signal.aborted) return;
     dispatchRecap("generated");
     await wait(READY_MS);
     // Mount the meal plan behind the Recap, then fade the Recap out over it.
@@ -219,7 +235,7 @@ function RecapContent({ onFinish }: RecapProps) {
             variant="ghost"
             size="icon"
             className="shrink-0 rounded-full bg-background/60 hover:bg-background/80 sm:backdrop-blur-sm"
-            onClick={() => dispatchRecap("close")}
+            onClick={handleClose}
             disabled={!canCloseRecap(phase)}
             aria-label="Back to the wizard"
           >
@@ -269,6 +285,7 @@ function RecapContent({ onFinish }: RecapProps) {
               phase !== "celebrating" && (
                 <GeneratingView
                   key="generating"
+                  morphId="recap-generate"
                   ready={phase === "leaving"}
                   currentDay={generation.currentDay}
                   totalDays={generation.totalDays}
@@ -464,18 +481,29 @@ function RecapStepCard({
   );
 }
 
-function GeneratingView({
-  ready,
+export function GeneratingView({
+  ready = false,
+  title,
+  morphId,
+  className,
   currentDay,
   totalDays,
 }: {
-  ready: boolean;
+  ready?: boolean;
+  // Overrides the "cooking" headline.
+  title?: string;
+  // Shared layoutId with the button that morphs into the loader (the Recap's).
+  morphId?: string;
+  className?: string;
   currentDay: number;
   totalDays: number;
 }) {
   return (
     <motion.div
-      className="flex flex-1 flex-col items-center justify-center pb-16 text-center"
+      className={cn(
+        "flex flex-1 flex-col items-center justify-center pb-16 text-center",
+        className,
+      )}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -483,7 +511,7 @@ function GeneratingView({
     >
       {/* Shares its layoutId with the "Generate My Week" button, which morphs
           into this loader. */}
-      <motion.div layoutId="recap-generate" className="mb-2">
+      <motion.div layoutId={morphId} className="mb-2">
         <FoodMorphLoader tone="primary" />
       </motion.div>
       <div
@@ -498,7 +526,7 @@ function GeneratingView({
             exit={{ opacity: 0, y: -6 }}
             className="mb-1 text-xl font-semibold"
           >
-            {ready ? "Your week is ready!" : "Cooking up your week…"}
+            {ready ? "Your week is ready!" : (title ?? "Cooking up your week…")}
           </motion.h3>
         </AnimatePresence>
         <p className="mb-4 text-sm text-muted-foreground">

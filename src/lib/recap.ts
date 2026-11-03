@@ -28,7 +28,7 @@ const TRANSITIONS: Record<
   closed: { open: "review" },
   review: { close: "closed", generate: "celebrating" },
   celebrating: { burstDone: "generating" },
-  generating: { generated: "leaving", failed: "error" },
+  generating: { generated: "leaving", failed: "error", close: "closed" },
   error: { retry: "generating", backToReview: "review", close: "closed" },
   leaving: { left: "closed" },
 };

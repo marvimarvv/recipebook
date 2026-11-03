@@ -15,7 +15,19 @@ import {
   Cake,
   AlertCircle,
   RefreshCw,
+  RotateCcw,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,7 +37,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Accordion,
@@ -39,7 +50,7 @@ import { checkMistralAPI } from "@/lib/mistral";
 import { PREFERENCE_CHIP_CLASSES } from "@/lib/preferenceChips";
 import { useMealPlanGeneration } from "@/hooks/useMealPlanGeneration";
 import MealPlanSettingsDialog from "@/components/MealPlanSettingsDialog";
-import FoodMorphLoader from "@/components/FoodMorphLoader";
+import { GeneratingView } from "@/components/Recap";
 
 const mealTypeIcons: Record<string, React.ReactNode> = {
   breakfast: <Sun className="h-5 w-5" />,
@@ -129,6 +140,7 @@ export default function AIRecipeGenerator() {
   const preferences = useStore((state) => state.preferences);
   const nutritionSettings = useStore((state) => state.nutritionSettings);
   const generationOptions = useStore((state) => state.generationOptions);
+  const restartOnboarding = useStore((state) => state.restartOnboarding);
 
   const { generation, isStale, generateWeek, saveWeekMealPlan } =
     useMealPlanGeneration();
@@ -236,6 +248,30 @@ export default function AIRecipeGenerator() {
               </>
             )}
           </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost">
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Restart setup
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Restart the setup wizard?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This walks you through Preferences and Nutrition again and
+                  generates a new week when you finish. Your existing meal
+                  plans won&apos;t be deleted.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => restartOnboarding()}>
+                  Restart
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 
@@ -246,22 +282,17 @@ export default function AIRecipeGenerator() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="py-12 text-center"
           >
-            <FoodMorphLoader />
-            <h3 className="mb-2 text-xl font-semibold">
-              {apiAvailable
-                ? "Mistral AI is Generating Your Week..."
-                : "Cooking Up Something Delicious..."}
-            </h3>
-            <p className="mb-4 text-muted-foreground">
-              Day {generation.currentDay} of {generation.totalDays} done
-            </p>
-            <div className="mx-auto max-w-sm">
-              <Progress
-                value={(generation.currentDay / generation.totalDays) * 100}
-              />
-            </div>
+            <GeneratingView
+              className="py-12"
+              title={
+                apiAvailable
+                  ? "Mistral AI is Generating Your Week…"
+                  : "Cooking up something delicious…"
+              }
+              currentDay={generation.currentDay}
+              totalDays={generation.totalDays}
+            />
           </motion.div>
         )}
       </AnimatePresence>

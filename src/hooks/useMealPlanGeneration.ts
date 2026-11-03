@@ -268,7 +268,7 @@ export function useMealPlanGeneration() {
   ]);
 
   const generateWeek = useCallback(
-    async (useAI: boolean) => {
+    async (useAI: boolean, signal?: AbortSignal) => {
       const totalDays = 7;
       startGeneration(totalDays);
 
@@ -277,6 +277,7 @@ export function useMealPlanGeneration() {
       const failedDays: { day: string; error: string }[] = [];
 
       for (let i = 0; i < totalDays; i++) {
+        signal?.throwIfAborted();
         const dayDate = addDays(weekStartDate, i);
         const dayLabel = WEEKDAY_LABELS[i];
         let mealsByType: Record<string, RawGeneratedRecipe[]> | undefined;
@@ -311,6 +312,7 @@ export function useMealPlanGeneration() {
           totalNutrition: sumNutrition(meals),
         });
 
+        signal?.throwIfAborted();
         setGenerationProgress(i + 1);
       }
 

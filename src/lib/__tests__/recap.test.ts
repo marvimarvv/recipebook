@@ -30,7 +30,6 @@ describe("nextRecapPhase", () => {
   });
 
   it("ignores events that don't apply to the current phase", () => {
-    expect(nextRecapPhase("generating", "close")).toBe("generating");
     expect(nextRecapPhase("celebrating", "close")).toBe("celebrating");
     expect(nextRecapPhase("closed", "generate")).toBe("closed");
     expect(nextRecapPhase("review", "open")).toBe("review");
@@ -38,11 +37,11 @@ describe("nextRecapPhase", () => {
 });
 
 describe("canCloseRecap", () => {
-  it("only allows closing while reviewing or after an error", () => {
+  it("allows closing unless celebrating or leaving", () => {
     expect(canCloseRecap("review")).toBe(true);
     expect(canCloseRecap("error")).toBe(true);
     expect(canCloseRecap("celebrating")).toBe(false);
-    expect(canCloseRecap("generating")).toBe(false);
+    expect(canCloseRecap("generating")).toBe(true);
     expect(canCloseRecap("leaving")).toBe(false);
   });
 });
