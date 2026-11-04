@@ -226,28 +226,6 @@ export default function AIRecipeGenerator() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            onClick={handleGenerateMealPlan}
-            disabled={isGenerating}
-            className="min-w-[150px]"
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Generating...
-              </>
-            ) : weekMealPlan ? (
-              <>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Regenerate Week
-              </>
-            ) : (
-              <>
-                <Sparkles className="mr-2 h-4 w-4" />
-                Generate Meal Plan
-              </>
-            )}
-          </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="ghost">
@@ -272,6 +250,28 @@ export default function AIRecipeGenerator() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          <Button
+            onClick={handleGenerateMealPlan}
+            disabled={isGenerating}
+            className="min-w-[150px]"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generating...
+              </>
+            ) : weekMealPlan ? (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Regenerate Week
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-2 h-4 w-4" />
+                Generate Meal Plan
+              </>
+            )}
+          </Button>
         </div>
       </div>
 

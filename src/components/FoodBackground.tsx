@@ -48,8 +48,8 @@ const SHAPE_COUNT = 14;
 // height is short.
 const SHOW_QUERY = "(min-width: 640px) and (min-height: 500px)";
 // Every shape gets its own opacity, evenly spread across this range.
-const MIN_OPACITY = 0.05;
-const MAX_OPACITY = 0.17;
+const MIN_OPACITY = 0.1;
+const MAX_OPACITY = 0.3;
 // While the Recap is open the shapes rise above its mesh gradient, turn white
 // and get this much more visible. Shapes render at the lifted opacity inside a
 // wrapper at 1 / LIFT, which CSS raises to 1 when lifted.

@@ -89,12 +89,12 @@ export function CookingLevelPicker({
   onChange: (level: CookingLevel) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="grid grid-cols-3 gap-2">
       {COOKING_LEVELS.map((level) => (
         <Button
           key={level}
           variant={value === level ? "default" : "outline"}
-          size="sm"
+          aria-pressed={value === level}
           onClick={() => onChange(level)}
         >
           {capitalize(level)}

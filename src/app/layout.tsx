@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Cal_Sans } from "next/font/google";
+import { Cal_Sans, DM_Sans } from "next/font/google";
 import FoodBackground from "@/components/FoodBackground";
 import MeshGradient from "@/components/MeshGradient";
 import "./globals.css";
@@ -8,6 +8,12 @@ const calSans = Cal_Sans({
   subsets: ["latin"],
   weight: "400",
   variable: "--font-cal-sans",
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-dm-sans",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -58,8 +64,12 @@ export default function RootLayout({
   return (
     // Browser extensions (e.g. LanguageTool's data-lt-installed) add attributes
     // to <html> before React hydrates; this only silences that one element.
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${calSans.variable} ${calSans.className} antialiased`}>
+    <html
+      lang="en"
+      className={`${dmSans.variable} ${calSans.variable}`}
+      suppressHydrationWarning
+    >
+      <body className={`${dmSans.className} antialiased`}>
         {/* Same matte mesh as the Recap, behind everything (the food shapes
             come after it in DOM order, so they stay on top). */}
         <div className="pointer-events-none fixed inset-0 z-0 opacity-45">

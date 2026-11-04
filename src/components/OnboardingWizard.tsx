@@ -135,7 +135,7 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
       <div className="mb-4 flex items-center gap-3">
         <Progress
           className="h-5 flex-1 bg-muted/60"
-          indicatorClassName="bg-primary/20"
+          indicatorClassName="bg-primary/40"
           labelClassName="text-foreground"
           value={((step + 1) / STEPS.length) * 100}
           label={`Step ${step + 1} of ${STEPS.length}`}
