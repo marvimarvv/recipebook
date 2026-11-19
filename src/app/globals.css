@@ -142,6 +142,28 @@
   }
 }
 
+/*
+  Tailwind v4's preflight leaves buttons on the default cursor. Utilities
+  (cursor-grab, cursor-none, ...) still override this since base comes first.
+*/
+@layer base {
+  a[href],
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="tab"],
+  [role="option"],
+  [role="menuitem"],
+  summary,
+  select,
+  label[for],
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="file"],
+  ::file-selector-button {
+    cursor: pointer;
+  }
+}
+
 @utility text-balance {
   text-wrap: balance;
 }

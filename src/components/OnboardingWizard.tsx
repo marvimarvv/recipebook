@@ -1,7 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+  useAnimate,
+  useReducedMotion,
+} from "framer-motion";
 import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,7 +18,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { HoverArrowCursor } from "@/components/ui/hover-arrow-cursor";
 import { FitText } from "@/components/ui/fit-text";
 import { Progress } from "@/components/ui/progress";
 import PreferenceCategoryCards from "@/components/PreferenceCategoryCards";
@@ -103,6 +107,29 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
     ? activeFooter.back !== null
     : !isFirstStep;
   const nextLabel = activeFooter ? activeFooter.next.label : "Next";
+  const readyToLeave = activeFooter?.next.leavesStep ?? false;
+
+  // Pops the Next button once whenever it becomes ready to leave the Step,
+  // including when the user lands on a Step that is already finished.
+  // Moving between Sections inside a Step doesn't pop it.
+  const [nextButtonScope, animateNextButton] = useAnimate<HTMLDivElement>();
+  const prefersReducedMotion = useReducedMotion();
+  useEffect(() => {
+    if (!readyToLeave || prefersReducedMotion || !nextButtonScope.current) {
+      return;
+    }
+    animateNextButton(
+      nextButtonScope.current,
+      { scale: [1, 1.06, 0.98, 1] },
+      { duration: 0.45, times: [0, 0.35, 0.7, 1], ease: "easeOut" },
+    );
+  }, [
+    step,
+    readyToLeave,
+    prefersReducedMotion,
+    animateNextButton,
+    nextButtonScope,
+  ]);
 
   const handleSkip = () => {
     completeOnboarding();
@@ -260,23 +287,15 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
             Generate My Week
           </Button>
         ) : (
-          <HoverArrowCursor>
-            {({ x, y, labelRef }) => (
-              <Button
-                onClick={activeFooter ? activeFooter.next.onClick : handleNext}
-                className="transition-transform hover:scale-105"
-              >
-                <motion.span
-                  ref={labelRef}
-                  style={{ x, y }}
-                  className="flex items-center"
-                >
-                  {nextLabel}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </motion.span>
-              </Button>
-            )}
-          </HoverArrowCursor>
+          <div ref={nextButtonScope} className="inline-flex">
+            <Button
+              onClick={activeFooter ? activeFooter.next.onClick : handleNext}
+              className="transition-[scale,background-color] duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] motion-safe:hover:scale-105 motion-safe:focus-visible:scale-105"
+            >
+              {nextLabel}
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         )}
       </div>
 

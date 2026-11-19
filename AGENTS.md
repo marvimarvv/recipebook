@@ -7,3 +7,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+# Verify
+
+Before you report a change as done:
+
+- Run `pnpm lint:check` and `pnpm test`; both must pass. No hook or CI runs them for you.
+- A UI change is verified only once you have seen it: open it in the built-in browser (or a Playwright script; the repo has no Playwright dependency) at 390 px wide and at desktop width, and say what you looked at. If you could not look, say so instead of reporting it as done.
+
+# Accessibility
+
+- Every `hover:` style also applies on `:focus-visible`, so keyboard users get the same feedback.
+- Every animation respects `prefers-reduced-motion`: drop movement and scaling, keep only color or opacity changes. Use `useReducedMotion` from framer-motion, or Tailwind's `motion-safe:` / `motion-reduce:` variants and the CSS media query.

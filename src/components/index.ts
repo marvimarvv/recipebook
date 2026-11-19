@@ -1,5 +1,4 @@
 export { Button } from "./ui/button";
-export { HoverArrowCursor } from "./ui/hover-arrow-cursor";
 export {
   Card,
   CardHeader,
