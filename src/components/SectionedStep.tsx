@@ -556,7 +556,7 @@ export function SectionAccordion({
             className={cn(
               "rounded-xl border bg-card transition-[scale,box-shadow] duration-300 motion-reduce:transition-none",
               isOpen &&
-                "preference-active-border scale-[1.01] shadow-md shadow-primary/10",
+                "preference-active-border scale-[1.01] shadow-md shadow-primary/10 motion-reduce:scale-100",
             )}
           >
             <button

@@ -181,7 +181,7 @@ export default function OnboardingWizard({ onFinish }: OnboardingWizardProps) {
         minSize={20}
         maxSize={44}
         className="mb-4 text-center font-bold"
-        textClassName="bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent"
+        textClassName="bg-linear-to-r from-primary to-lime-700 bg-clip-text text-transparent"
       >
         Let&apos;s set up your RecipeBook
       </FitText>

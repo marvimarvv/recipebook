@@ -11,11 +11,13 @@ import {
   Check,
   Sun,
   Moon,
+  CalendarDays,
   Coffee,
   Cake,
   AlertCircle,
   RefreshCw,
   RotateCcw,
+  type LucideIcon,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -38,12 +40,6 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { useStore } from "@/store/useStore";
 import { GeneratedRecipe, MealPlan } from "@/types";
 import { checkMistralAPI } from "@/lib/mistral";
@@ -51,87 +47,152 @@ import { PREFERENCE_CHIP_CLASSES } from "@/lib/preferenceChips";
 import { useMealPlanGeneration } from "@/hooks/useMealPlanGeneration";
 import MealPlanSettingsDialog from "@/components/MealPlanSettingsDialog";
 import { GeneratingView } from "@/components/Recap";
+import { SectionAccordion } from "@/components/SectionedStep";
 
-const mealTypeIcons: Record<string, React.ReactNode> = {
-  breakfast: <Sun className="h-5 w-5" />,
-  lunch: <Coffee className="h-5 w-5" />,
-  dinner: <Moon className="h-5 w-5" />,
-  snack: <Cake className="h-5 w-5" />,
+const mealTypeIcons: Record<GeneratedRecipe["mealType"], LucideIcon> = {
+  breakfast: Sun,
+  lunch: Coffee,
+  dinner: Moon,
+  snack: Cake,
 };
 
-const mealTypeColors: Record<string, string> = {
-  breakfast: "bg-linear-to-br from-amber-500 to-orange-500",
-  lunch: "bg-linear-to-br from-blue-500 to-cyan-500",
-  dinner: "bg-linear-to-br from-purple-500 to-pink-500",
-  snack: "bg-linear-to-br from-green-500 to-emerald-500",
+const mealTypeLabels: Record<GeneratedRecipe["mealType"], string> = {
+  breakfast: "Breakfast",
+  lunch: "Lunch",
+  dinner: "Dinner",
+  snack: "Snack",
 };
+
+// Same colors as the macro bar in the settings summary below.
+const MACROS = [
+  { key: "protein", label: "protein", color: "from-blue-500 to-cyan-500" },
+  { key: "carbs", label: "carbs", color: "from-amber-500 to-orange-500" },
+  { key: "fat", label: "fat", color: "from-green-500 to-emerald-500" },
+] as const;
+
+const MEAL_ORDER = ["breakfast", "lunch", "dinner", "snacks"] as const;
+
+function dayRecipes(meals: MealPlan["meals"]) {
+  return MEAL_ORDER.flatMap((mealType) =>
+    (meals[mealType] ?? []).map((recipe) => ({
+      recipe,
+      mealType: (mealType === "snacks"
+        ? "snack"
+        : mealType) as GeneratedRecipe["mealType"],
+    })),
+  );
+}
+
+function formatDay(date: Date) {
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatWeekRange(start: Date, end: Date) {
+  const monthDay = (date: Date) =>
+    date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  // "Nov 23 – 29, 2026", or "Nov 30 – Dec 6, 2026" across a month boundary.
+  const to =
+    start.getMonth() === end.getMonth() ? end.getDate() : monthDay(end);
+  return `${monthDay(start)} – ${to}, ${end.getFullYear()}`;
+}
+
+function MealCard({
+  recipe,
+  mealType,
+}: {
+  recipe: GeneratedRecipe;
+  mealType: GeneratedRecipe["mealType"];
+}) {
+  const Icon = mealTypeIcons[mealType];
+  const macroTotal =
+    recipe.nutrition.protein + recipe.nutrition.carbs + recipe.nutrition.fat;
+
+  return (
+    <article className="flex flex-col gap-3 rounded-lg bg-muted/50 p-4">
+      <div className="flex items-center gap-2">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-primary to-secondary">
+          <Icon className="h-4 w-4 text-primary-foreground" />
+        </span>
+        <span className="text-sm font-medium text-muted-foreground">
+          {mealTypeLabels[mealType]}
+        </span>
+      </div>
+
+      <div className="space-y-1">
+        <h4 className="text-lg leading-snug font-semibold">{recipe.name}</h4>
+        <p className="text-sm text-muted-foreground">{recipe.description}</p>
+      </div>
+
+      {recipe.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {recipe.tags.map((tag) => (
+            <Badge
+              key={tag}
+              variant="outline"
+              className="bg-background font-medium"
+            >
+              {tag}
+            </Badge>
+          ))}
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm tabular-nums">
+        <span className="flex items-center gap-1.5">
+          <Clock className="h-4 w-4 text-muted-foreground" />
+          {recipe.prepTime + recipe.cookTime} min
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Users className="h-4 w-4 text-muted-foreground" />
+          {recipe.servings} {recipe.servings === 1 ? "serving" : "servings"}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Flame className="h-4 w-4 text-muted-foreground" />
+          {recipe.nutrition.calories} cal
+        </span>
+      </div>
+
+      <div className="mt-auto space-y-1.5 border-t pt-3">
+        {macroTotal > 0 && (
+          <div
+            aria-hidden
+            className="flex h-1.5 overflow-hidden rounded-full bg-background"
+          >
+            {MACROS.map((macro) => (
+              <div
+                key={macro.key}
+                className={`h-full bg-linear-to-r ${macro.color}`}
+                style={{
+                  width: `${(recipe.nutrition[macro.key] / macroTotal) * 100}%`,
+                }}
+              />
+            ))}
+          </div>
+        )}
+        <p className="text-xs text-muted-foreground tabular-nums">
+          {MACROS.map(
+            (macro) => `${recipe.nutrition[macro.key]} g ${macro.label}`,
+          ).join(" · ")}
+        </p>
+      </div>
+    </article>
+  );
+}
 
 function DayMealsGrid({ meals }: { meals: MealPlan["meals"] }) {
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-      {Object.entries(meals).map(([mealType, recipes]) => {
-        if (!recipes || recipes.length === 0) return null;
-        const key = mealType === "snacks" ? "snack" : mealType;
-
-        return recipes.map((recipe: GeneratedRecipe, index: number) => (
-          <Card
-            key={`${mealType}-${index}`}
-            className="transition-shadow hover:shadow-lg"
-          >
-            <CardHeader className={`pb-0 ${mealTypeColors[key]}`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-white">
-                  {mealTypeIcons[key]}
-                  <CardTitle className="text-white">
-                    {key.charAt(0).toUpperCase() + key.slice(1)}
-                  </CardTitle>
-                </div>
-                <Badge variant="secondary" className="text-white">
-                  {recipe.nutrition.calories} cal
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-4">
-              <div className="mb-4 flex items-start justify-between">
-                <div>
-                  <h4 className="text-lg font-semibold">{recipe.name}</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {recipe.description}
-                  </p>
-                </div>
-              </div>
-              <div className="mb-4 flex flex-wrap gap-2">
-                {recipe.tags.map((tag) => (
-                  <Badge key={tag} variant="outline">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-              <div className="grid grid-cols-3 gap-4 text-sm">
-                <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span>{recipe.prepTime + recipe.cookTime} min</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <span>{recipe.servings} serving</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Flame className="h-4 w-4 text-muted-foreground" />
-                  <span>{recipe.nutrition.calories} cal</span>
-                </div>
-              </div>
-              <div className="mt-4 space-y-2 border-t pt-4">
-                <div className="flex justify-between text-sm">
-                  <span>Protein: {recipe.nutrition.protein}g</span>
-                  <span>Carbs: {recipe.nutrition.carbs}g</span>
-                  <span>Fat: {recipe.nutrition.fat}g</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ));
-      })}
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {dayRecipes(meals).map(({ recipe, mealType }, index) => (
+        <MealCard
+          key={`${mealType}-${recipe.id}-${index}`}
+          recipe={recipe}
+          mealType={mealType}
+        />
+      ))}
     </div>
   );
 }
@@ -146,6 +207,7 @@ export default function AIRecipeGenerator() {
     useMealPlanGeneration();
 
   const [apiAvailable, setApiAvailable] = useState<boolean | null>(null);
+  const [openDay, setOpenDay] = useState<number | null>(0);
 
   const isGenerating = generation.status === "generating";
   const weekMealPlan = generation.result;
@@ -238,8 +300,8 @@ export default function AIRecipeGenerator() {
                 <AlertDialogTitle>Restart the setup wizard?</AlertDialogTitle>
                 <AlertDialogDescription>
                   This walks you through Preferences and Nutrition again and
-                  generates a new week when you finish. Your existing meal
-                  plans won&apos;t be deleted.
+                  generates a new week when you finish. Your existing meal plans
+                  won&apos;t be deleted.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -304,55 +366,47 @@ export default function AIRecipeGenerator() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="space-y-6"
+            className="space-y-4"
           >
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Your Generated Weekly Meal Plan</CardTitle>
-                    <CardDescription>
-                      Week of{" "}
-                      {weekMealPlan.weekStartDate.toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </CardDescription>
-                  </div>
-                  <Button onClick={handleSaveMealPlan}>
-                    <Check className="mr-2 h-4 w-4" />
-                    Save Plan
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {/* Day-by-day accordion */}
-                <Accordion type="single" collapsible defaultValue="day-0">
-                  {weekMealPlan.days.map((day, index) => (
-                    <AccordionItem key={day.id} value={`day-${index}`}>
-                      <AccordionTrigger>
-                        <div className="flex flex-1 items-center justify-between pr-4">
-                          <span className="font-medium">
-                            {day.date.toLocaleDateString("en-US", {
-                              weekday: "long",
-                              month: "short",
-                              day: "numeric",
-                            })}
-                          </span>
-                          <span className="text-sm text-muted-foreground">
-                            {day.totalNutrition.calories} cal
-                          </span>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <DayMealsGrid meals={day.meals} />
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-              </CardContent>
-            </Card>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h3 className="text-2xl font-semibold">Your week</h3>
+                <p className="text-sm text-muted-foreground">
+                  {formatWeekRange(
+                    weekMealPlan.weekStartDate,
+                    weekMealPlan.days[weekMealPlan.days.length - 1]?.date ??
+                      weekMealPlan.weekStartDate,
+                  )}
+                </p>
+              </div>
+              <Button onClick={handleSaveMealPlan} className="self-start">
+                <Check className="mr-2 h-4 w-4" />
+                Save Plan
+              </Button>
+            </div>
+            <SectionAccordion
+              idPrefix="week"
+              sections={weekMealPlan.days.map((day) => ({
+                key: day.id,
+                title: formatDay(day.date),
+                icon: CalendarDays,
+              }))}
+              openIndex={openDay}
+              getSummary={(index) => {
+                const day = weekMealPlan.days[index];
+                const names = dayRecipes(day.meals).map(
+                  ({ recipe }) => recipe.name,
+                );
+                return `${day.totalNutrition.calories.toLocaleString("en-US")} cal · ${names.join(", ")}`;
+              }}
+              emptyLabel={() => "No meals"}
+              renderContent={(index) => (
+                <DayMealsGrid meals={weekMealPlan.days[index].meals} />
+              )}
+              onToggleSection={(index) =>
+                setOpenDay((current) => (current === index ? null : index))
+              }
+            />
           </motion.div>
         )}
       </AnimatePresence>

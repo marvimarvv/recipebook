@@ -87,20 +87,15 @@ export default function Home() {
         </Tabs>
 
         {/* Floating illustrations */}
-        <motion.div
-          className="pointer-events-none fixed bottom-10 left-10 z-0 h-16 w-16 opacity-10"
-          animate={{ y: [0, -10, 0], rotate: [0, 5, -5, 0] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <div className="h-full w-full rounded-full bg-linear-to-br from-primary to-secondary" />
-        </motion.div>
-        <motion.div
-          className="pointer-events-none fixed top-20 right-20 z-0 h-12 w-12 opacity-10"
-          animate={{ y: [0, 10, 0], rotate: [0, -5, 5, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <div className="h-full w-full rounded-full bg-linear-to-br from-accent to-primary" />
-        </motion.div>
+        {/* Behind the content (-z-10), still and flat under reduced motion. */}
+        <div
+          aria-hidden
+          className="pointer-events-none fixed bottom-10 left-10 -z-10 h-16 w-16 rounded-full bg-linear-to-br from-primary to-secondary opacity-10 motion-safe:animate-float"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none fixed top-20 right-20 -z-10 h-12 w-12 rounded-full bg-linear-to-br from-accent to-primary opacity-10 motion-safe:animate-[float_8s_ease-in-out_infinite_reverse]"
+        />
 
         {/* Toast Notifications */}
         <Toast />
