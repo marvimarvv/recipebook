@@ -11,7 +11,6 @@ import {
   Check,
   Sun,
   Moon,
-  CalendarDays,
   Coffee,
   Cake,
   AlertCircle,
@@ -386,10 +385,10 @@ export default function AIRecipeGenerator() {
             </div>
             <SectionAccordion
               idPrefix="week"
+              dropCap
               sections={weekMealPlan.days.map((day) => ({
                 key: day.id,
                 title: formatDay(day.date),
-                icon: CalendarDays,
               }))}
               openIndex={openDay}
               getSummary={(index) => {

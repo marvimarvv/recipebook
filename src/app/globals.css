@@ -384,3 +384,16 @@
   background: hsl(var(--primary));
   color: hsl(var(--primary-foreground));
 }
+
+/*
+  Weekday headers in the week plan: the title's own first letter as a drop
+  cap spanning the title and summary lines.
+*/
+.drop-cap::first-letter {
+  float: left;
+  font-family: var(--font-display);
+  font-size: 2.75rem;
+  line-height: 0.8;
+  margin: 0.06em 0.08em 0 0;
+  color: var(--color-primary);
+}

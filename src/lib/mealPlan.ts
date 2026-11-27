@@ -1,6 +1,6 @@
 // Pure helpers for the daily meal plan (which meals and how many snacks).
 
-import type { NutritionSettings } from "../types";
+import type { MealPlan, NutritionSettings, WeekMealPlan } from "../types";
 
 type MealPlanSettings = NutritionSettings["mealPlan"];
 export type MainMeal = "breakfast" | "lunch" | "dinner";
@@ -29,4 +29,22 @@ export function canToggleOffMeal(
   meal: MainMeal,
 ): boolean {
   return !mealPlan[meal] || MAIN_MEALS.some((m) => m !== meal && mealPlan[m]);
+}
+
+/** A week plan as it comes back out of localStorage: JSON turns Dates into strings. */
+export type StoredWeekMealPlan = Omit<
+  WeekMealPlan,
+  "weekStartDate" | "days"
+> & {
+  weekStartDate: string | Date;
+  days: (Omit<MealPlan, "date"> & { date: string | Date })[];
+};
+
+/** Turns the stored date strings of a week plan back into Dates. */
+export function reviveWeekMealPlan(plan: StoredWeekMealPlan): WeekMealPlan {
+  return {
+    ...plan,
+    weekStartDate: new Date(plan.weekStartDate),
+    days: plan.days.map((day) => ({ ...day, date: new Date(day.date) })),
+  };
 }

@@ -3,6 +3,7 @@ import {
   canToggleOffMeal,
   caloriesPerMeal,
   countDailyMeals,
+  reviveWeekMealPlan,
 } from "../mealPlan";
 
 const DEFAULT_PLAN = {
@@ -46,5 +47,30 @@ describe("canToggleOffMeal", () => {
   it("always allows switching a meal back on", () => {
     const onlyDinner = { ...DEFAULT_PLAN, breakfast: false, lunch: false };
     expect(canToggleOffMeal(onlyDinner, "lunch")).toBe(true);
+  });
+});
+
+describe("reviveWeekMealPlan", () => {
+  it("turns the stored date strings back into Dates", () => {
+    const nutrition = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+    const stored = JSON.parse(
+      JSON.stringify({
+        id: "1",
+        weekStartDate: new Date("2026-11-23T00:00:00Z"),
+        days: [
+          {
+            id: "d1",
+            date: new Date("2026-11-24T00:00:00Z"),
+            meals: {},
+            totalNutrition: nutrition,
+          },
+        ],
+        totalNutrition: nutrition,
+      }),
+    );
+    const plan = reviveWeekMealPlan(stored);
+    expect(plan.weekStartDate).toEqual(new Date("2026-11-23T00:00:00Z"));
+    expect(plan.days[0].date).toEqual(new Date("2026-11-24T00:00:00Z"));
+    expect(plan.id).toBe("1");
   });
 });

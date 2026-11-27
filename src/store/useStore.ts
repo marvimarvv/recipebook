@@ -12,6 +12,7 @@ import {
 } from "@/types";
 import type { GenerationOptions } from "@/lib/mistral";
 import { nextRecapPhase, type RecapEvent, type RecapPhase } from "@/lib/recap";
+import { reviveWeekMealPlan, type StoredWeekMealPlan } from "@/lib/mealPlan";
 
 export type GenerationStatus = "idle" | "generating" | "success" | "error";
 
@@ -24,6 +25,13 @@ export interface GenerationState {
   // JSON snapshot of the preferences/nutrition/options used to produce `result`,
   // used to detect when the displayed plan is stale relative to current settings.
   snapshot: string | null;
+}
+
+// The most recently generated week, kept in localStorage so it survives a
+// reload. Each new generation replaces it.
+export interface LastGeneratedPlan {
+  result: WeekMealPlan;
+  snapshot: string;
 }
 
 const defaultGenerationState: GenerationState = {
@@ -72,6 +80,7 @@ interface AppState {
   // Meal plan generation (shared between the onboarding wizard and the
   // Generate tab so progress/results survive the wizard handoff)
   generation: GenerationState;
+  lastGeneratedPlan: LastGeneratedPlan | null;
   startGeneration: (totalDays: number) => void;
   setGenerationProgress: (currentDay: number) => void;
   setGenerationResult: (result: WeekMealPlan, snapshot: string) => void;
@@ -132,6 +141,7 @@ interface PersistedAppState {
   preferences?: UserPreferences;
   mealPlans?: PersistedMealPlan[];
   weekMealPlans?: PersistedWeekMealPlan[];
+  lastGeneratedPlan?: { result: StoredWeekMealPlan; snapshot: string } | null;
 }
 
 export const useStore = create<AppState>()(
@@ -205,8 +215,10 @@ export const useStore = create<AppState>()(
           ),
         })),
 
-      // Meal plan generation (not persisted - resets each session)
+      // Meal plan generation. Only the last finished plan is persisted
+      // (lastGeneratedPlan); progress and errors reset each session.
       generation: defaultGenerationState,
+      lastGeneratedPlan: null,
       startGeneration: (totalDays: number) =>
         set({
           generation: {
@@ -221,6 +233,7 @@ export const useStore = create<AppState>()(
         })),
       setGenerationResult: (result: WeekMealPlan, snapshot: string) =>
         set((state) => ({
+          lastGeneratedPlan: { result, snapshot },
           generation: {
             ...state.generation,
             status: "success",
@@ -264,6 +277,7 @@ export const useStore = create<AppState>()(
           mealPlans: [] as MealPlan[],
           weekMealPlans: [] as WeekMealPlan[],
           generation: defaultGenerationState,
+          lastGeneratedPlan: null,
           recapPhase: "closed",
           toasts: [] as ToastMessage[],
         }),
@@ -278,7 +292,31 @@ export const useStore = create<AppState>()(
         generationOptions: state.generationOptions,
         mealPlans: state.mealPlans,
         weekMealPlans: state.weekMealPlans,
+        lastGeneratedPlan: state.lastGeneratedPlan,
       }),
+      // Show the last generated plan again after a reload. merge runs on
+      // every rehydration (migrate only on version changes), so the plan's
+      // Date fields are revived here.
+      merge: (persistedState, currentState) => {
+        const { lastGeneratedPlan, ...rest } = (persistedState ??
+          {}) as PersistedAppState;
+        const merged = { ...currentState, ...rest } as AppState;
+        if (!lastGeneratedPlan?.result) return merged;
+        const plan = {
+          result: reviveWeekMealPlan(lastGeneratedPlan.result),
+          snapshot: lastGeneratedPlan.snapshot,
+        };
+        return {
+          ...merged,
+          lastGeneratedPlan: plan,
+          generation: {
+            ...defaultGenerationState,
+            status: "success",
+            currentDay: defaultGenerationState.totalDays,
+            ...plan,
+          },
+        };
+      },
       // Revive Date fields (zustand persist round-trips through JSON, so Dates
       // come back as strings) and mark pre-existing users as already onboarded
       // so they aren't forced through the setup wizard retroactively.

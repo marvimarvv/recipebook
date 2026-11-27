@@ -20,7 +20,7 @@ import {
 export interface SectionConfig {
   key: string;
   title: string;
-  icon: LucideIcon;
+  icon?: LucideIcon;
   // Optional sections open on an opt-in prompt asking `prompt` until the
   // user says yes or the section holds a value.
   optional?: boolean;
@@ -420,7 +420,7 @@ function ActiveSectionCard({
       <Card className="preference-active-border">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <SectionIcon className="h-6 w-6 text-primary" />
+            {SectionIcon && <SectionIcon className="h-6 w-6 text-primary" />}
             <CardTitle>{section.title}</CardTitle>
             {section.optional && <Badge variant="outline">Optional</Badge>}
           </div>
@@ -499,6 +499,7 @@ export function SectionAccordion({
   onToggleSection,
   pendingFocusIndex = null,
   onPendingFocusHandled,
+  dropCap = false,
 }: {
   className?: string;
   idPrefix: string;
@@ -522,6 +523,9 @@ export function SectionAccordion({
   onToggleSection: (index: number) => void;
   pendingFocusIndex?: number | null;
   onPendingFocusHandled?: () => void;
+  // Drop cap on each title's first letter instead of an icon; for short
+  // titles like weekdays.
+  dropCap?: boolean;
 }) {
   const prefersReducedMotion = useReducedMotion();
   const headerRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -570,15 +574,25 @@ export function SectionAccordion({
               onClick={() => onToggleSection(index)}
               className="flex w-full scroll-mt-4 items-center gap-3 px-4 py-3 text-left"
             >
-              <SectionIcon className="h-5 w-5 shrink-0 text-primary" />
-              <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-1.5 font-medium">
-                  {isVisited && (
-                    <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
-                  )}
-                  <span className="truncate">{section.title}</span>
-                </span>
-                <span className="block truncate text-xs text-muted-foreground">
+              {SectionIcon && !dropCap && (
+                <SectionIcon className="h-5 w-5 shrink-0 text-primary" />
+              )}
+              <span className="block min-w-0 flex-1">
+                {dropCap ? (
+                  // A plain block, not flex or truncated, so ::first-letter
+                  // applies and its float hangs down beside the summary.
+                  <span className="drop-cap block font-medium">
+                    {section.title}
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5 font-medium">
+                    {isVisited && (
+                      <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
+                    )}
+                    <span className="truncate">{section.title}</span>
+                  </span>
+                )}
+                <span className="block truncate font-sans text-xs font-normal text-muted-foreground">
                   {summary ??
                     emptyLabel?.(index) ??
                     (section.optional
